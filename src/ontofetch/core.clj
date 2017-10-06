@@ -1,9 +1,10 @@
 (ns ontofetch.core
   (:require
-    [clojure.xml :as xml]
-    [clojure.java.io :as io]
-    [clojure.zip :as zip]
-    [org.httpkit.client :as http])
+   [clojure.java.io :as io]
+   [clojure.string :as s]
+   [clojure.xml :as xml]
+   [clojure.zip :as zip]
+   [org.httpkit.client :as http])
   (:gen-class))
 
 ;; TODO: General error handling
@@ -22,7 +23,7 @@
 (defn fetch!
   "Makes a directory and downloads given ontology to it. Returns path to file."
   [dir final-url]
-  (do (let [filepath (str dir "/" (last (clojure.string/split final-url #"/")))]
+  (do (let [filepath (str dir "/" (last (s/split final-url #"/")))]
         (.mkdir (java.io.File. (validate-dir dir)))
         (let [content (slurp final-url)]
           (spit filepath content))
@@ -71,17 +72,18 @@
   "Returns a map of the ontology metadata."
   [filepath]
   (let [xml-tree (zip-xml filepath)]
-  	{:ontology-iri (get-ontology-iri xml-tree),
+    {:ontology-iri (get-ontology-iri xml-tree),
      :version-iri (get-version-iri xml-tree)}))
 
 (defn map-request
   "Returns a map of the request details for a given ontology (which acts as the key)."
   [filepath redirs metadata]
   {(-> filepath
-       (clojure.string/split #"/")
+       (s/split #"/")
        last
-       (clojure.string/split #"\.")
+       (s/split #"\.")
        first) {:request-url (first redirs),
+               :directory (first (s/split filepath #"/"))
                :location filepath,
                :redirect-path redirs,
                :metadata metadata}})
