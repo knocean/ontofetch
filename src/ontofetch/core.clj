@@ -1,6 +1,8 @@
 (ns ontofetch.core
   (:require
+   [clojure.edn :as edn]
    [clojure.java.io :as io]
+   [clojure.pprint :as pp]
    [clojure.string :as s]
    [clojure.xml :as xml]
    [clojure.zip :as zip]
@@ -8,6 +10,10 @@
   (:gen-class))
 
 ;; TODO: General error handling
+
+(def +catalog+ "catalog.edn")
+(def date (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (java.util.Date.)))
+(def ont-metadata (atom (edn/read-string (slurp +catalog+))))
 
 (defn validate-dir
   "Checks if a directory is in proper format and that it does not exist. 
@@ -83,17 +89,29 @@
        last
        (s/split #"\.")
        first) {:request-url (first redirs),
-               :directory (first (s/split filepath #"/"))
+               :directory (first (s/split filepath #"/")),
+               :request-date date,
                :location filepath,
                :redirect-path redirs,
                :metadata metadata}})
 
-;; TODO: store metadata in catalog.edn file
-;;       including list of redirects & IRIs
+;; TODO: Log artifact records (#7)
+(defn update-metadata
+  "Updates ont-metadata with new details."
+  [new-details]
+  (swap! ont-metadata
+         (fn [current-details]
+           (merge-with conj current-details new-details))))
+
+(defn write-to-edn!
+  "Writes the ont-metadata to catalog.edn"
+  []
+  (pp/pprint @ont-metadata (io/writer +catalog+)))
 
 (defn -main
   "Just downloads the ontology into given dir and returns metadata."
   [& args]
   (let [redirs (get-redirects (second args))]
     (let [filepath (fetch! (first args) (last redirs))]
-      (map-request filepath redirs (map-ontology filepath)))))
+      (update-metadata (map-request filepath redirs (map-ontology filepath)))))
+  (write-to-edn!))
