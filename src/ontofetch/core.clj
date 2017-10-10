@@ -35,32 +35,6 @@
           (spit filepath content))
         filepath)))
 
-(defn zip-xml
-  "Parses a an XML file and creates a zipper to traverse."
-  [filepath]
-  (zip/xml-zip (xml/parse (io/file filepath))))
-
-;; TODO: change get-iri methods to find IRIs by name of element
-;;       instead of assuming their location.
-
-(defn get-ontology-iri
-  "Returns the ontology IRI from a RDF/XML OWL file."
-  [xml-tree]
-  (get-in (-> xml-tree
-              zip/down
-              zip/node) [:attrs :rdf:about]))
-
-(defn get-version-iri
-  "Returns the version IRI from a RDF/XML OWL file."
-  [xml-tree]
-  (get-in (-> xml-tree
-              zip/down
-              zip/down
-              zip/node) [:attrs :rdf:resource]))
-
-;; TODO: Look for imports (will not be in the same place every time)
-;;       use the name of the element instead of just the position
-
 (defn get-redirects
   "Manually follows redirects and returns a vector containing all redirect URLs.
    The final URL with content is the last entry."
@@ -73,6 +47,31 @@
         (301 302 303 307 308) (recur (conj redirs new-url) (:location headers))
         304 nil
         (throw (Exception. "Unhandled status."))))))
+
+(defn zip-xml
+  "Parses a an XML file and creates a zipper to traverse."
+  [filepath]
+  (zip/xml-zip (xml/parse (io/file filepath))))
+
+(defn get-ontology-iri
+  "Returns the ontology IRI from an RDF/XML OWL file."
+  [xml-tree]
+  (if-not (zip/end? xml-tree)
+    (let [details (zip/node xml-tree)]
+      (if (= (:tag details) :owl:Ontology)
+        (get-in details [:attrs :rdf:about])
+        (recur (zip/next xml-tree))))))
+
+(defn get-version-iri
+  "Returns the version IRI from an RDF/XML OWL file"
+  [xml-tree]
+  (if-not (zip/end? xml-tree)
+    (let [details (zip/node xml-tree)]
+      (if (= (:tag details) :owl:versionIRI)
+        (get-in details [:attrs :rdf:resource])
+        (recur (zip/next xml-tree))))))
+
+;; TODO: List of imports
 
 (defn map-ontology
   "Returns a map of the ontology metadata."
