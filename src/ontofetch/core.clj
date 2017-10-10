@@ -9,7 +9,7 @@
    [org.httpkit.client :as http])
   (:gen-class))
 
-;; TODO: General error handling
+;; TODO: General error handling (error logs)
 
 (def +catalog+ "catalog.edn")
 (def date (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (java.util.Date.)))
@@ -80,27 +80,43 @@
     {:ontology-iri (get-ontology-iri xml-tree),
      :version-iri (get-version-iri xml-tree)}))
 
+(defn get-ontology-key
+  "Returns a keyword based on the filename to be used as key in catalog.edn."
+  [filepath]
+  (-> filepath
+      (s/split #"/")
+      last
+      (s/split #"\.")
+      first
+      keyword))
+
 (defn map-request
   "Returns a map of the request details for a given ontology (which acts as the key)."
   [filepath redirs metadata]
-  {(-> filepath
-       (s/split #"/")
-       last
-       (s/split #"\.")
-       first) {:request-url (first redirs),
-               :directory (first (s/split filepath #"/")),
-               :request-date date,
-               :location filepath,
-               :redirect-path redirs,
-               :metadata metadata}})
+  {(get-ontology-key filepath) {:request-url (first redirs),
+                                :directory (first (s/split filepath #"/")),
+                                :request-date date,
+                                :location filepath,
+                                :redirect-path redirs,
+                                :metadata metadata}})
 
-;; TODO: Log artifact records (#7)
+(defn create-artifact-record
+  "Creates a record of the last request made for the requested ontology."
+  [filepath]
+  (let [ont-key (get-ontology-key filepath)]
+    (if-let [prev (ont-key @ont-metadata)]
+      (swap! ont-metadata
+             (fn [current]
+               (merge-with conj current {ont-key {:last-request {:request-date (:request-date prev),
+                                                                 :request-url (:request-url prev),
+                                                                 :directory (:directory prev),
+                                                                 :error-log "TO BE IMPLEMENTED"}}}))))))
 (defn update-metadata
   "Updates ont-metadata with new details."
   [new-details]
   (swap! ont-metadata
-         (fn [current-details]
-           (merge-with conj current-details new-details))))
+         (fn [current]
+           (merge-with conj current new-details))))
 
 (defn write-to-edn!
   "Writes the ont-metadata to catalog.edn"
@@ -108,9 +124,10 @@
   (pp/pprint @ont-metadata (io/writer +catalog+)))
 
 (defn -main
-  "Just downloads the ontology into given dir and returns metadata."
+  "Downloads the ontology into given dir and updates the catalog.edn the metadata."
   [& args]
   (let [redirs (get-redirects (second args))]
     (let [filepath (fetch! (first args) (last redirs))]
-      (update-metadata (map-request filepath redirs (map-ontology filepath)))))
+      (do (create-artifact-record filepath)
+          (update-metadata (map-request filepath redirs (map-ontology filepath))))))
   (write-to-edn!))
