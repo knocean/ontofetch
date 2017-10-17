@@ -34,8 +34,7 @@
   [dir final-url]
   (do (let [filepath (str dir "/" (last (s/split final-url #"/")))]
         (.mkdir (java.io.File. (validate-dir dir)))
-        (let [content (slurp final-url)]
-          (spit filepath content))
+        (spit filepath (slurp final-url))
         filepath)))
 
 (defn get-redirects
@@ -78,7 +77,7 @@
           (recur (+ n 1)))))))
 
 (defn get-imports
-  "Gets a list of import URLs from an RDF/XML OWL file."
+  "Downloads imports and returns a list of import URLs from an RDF/XML OWL file."
   [xml]
   (loop [n 0 imports []]
     (if (< n (count xml))
@@ -86,7 +85,7 @@
         (if (= (:tag content) :owl:imports)
           (recur (+ n 1) (conj imports (get-in content [:attrs :rdf:resource])))
           (recur (+ n 1) imports)))
-      imports)))
+        imports)))
 
 (defn map-ontology
   "Returns a map of the ontology metadata."
@@ -106,6 +105,16 @@
    :redirect-path redirs,
    :metadata metadata})
 
+(defn fetch-imports!
+  "Downloads all imports for a given ontology to the same directory."
+  [request-details]
+  (doseq [url (get-in request-details [:metadata :imports])]
+    (->> url
+         (get-redirects)
+         (last)
+         (slurp)
+         (spit (str (:directory request-details) "/" (last (s/split url #"/")))))))
+
 (defn add-request
   "Adds the request details to the catalog."
   [request-details]
@@ -123,5 +132,9 @@
   [& args]
   (let [redirs (get-redirects (second args))]
     (let [filepath (fetch! (first args) (last redirs))]
-      (add-request (map-request filepath redirs (map-ontology filepath)))))
+      (let [request-details (->> filepath
+                            (map-ontology)
+                            (map-request filepath redirs))]
+          (fetch-imports! request-details)
+          (add-request request-details))))
   (write-to-edn!))
