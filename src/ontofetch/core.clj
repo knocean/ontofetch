@@ -13,26 +13,32 @@
 
 (def +catalog+ "catalog.edn")
 (def date (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (java.util.Date.)))
-(def catalog (atom 
-  (#(if (.exists (io/as-file +catalog+))
-      (edn/read-string (slurp +catalog+))
-      []))))
+(def catalog (atom
+              (#(if (.exists (io/as-file +catalog+))
+                  (edn/read-string (slurp +catalog+))
+                  []))))
 
 (defn validate-dir
-  "Checks if a directory is in proper format and that it does not exist. 
+  "Checks if a directory is in proper format and that it does not exist.
    If so, returns dir name as str."
   [dir]
   (when-not (re-matches #"[A-Za-z0-9_]+" dir)
-    (throw (Exception. "Directory name can only include letters, numbers, or 
+    (throw (Exception. "Directory name can only include letters, numbers, or
       underscores.")))
   (when (.isDirectory (io/file dir))
     (throw (Exception. "Directory must not already exist in the file system.")))
   dir)
 
+(defn get-path-from-purl
+  "Creates a filepath from a directory and a purl,
+   giving the file the same name as the purl."
+  [dir url]
+  (str dir "/" (last (s/split url #"/"))))
+
 (defn fetch!
   "Makes a directory and downloads given ontology to it. Returns path to file."
   [dir final-url]
-  (do (let [filepath (str dir "/" (last (s/split final-url #"/")))]
+  (do (let [filepath (get-path-from-purl dir final-url)]
         (.mkdir (java.io.File. (validate-dir dir)))
         (spit filepath (slurp final-url))
         filepath)))
@@ -85,7 +91,7 @@
         (if (= (:tag content) :owl:imports)
           (recur (+ n 1) (conj imports (get-in content [:attrs :rdf:resource])))
           (recur (+ n 1) imports)))
-        imports)))
+      imports)))
 
 (defn map-ontology
   "Returns a map of the ontology metadata."
@@ -105,6 +111,13 @@
    :redirect-path redirs,
    :metadata metadata})
 
+(defn validate-file
+  "Checks if a file exists at a given location. If not, returns the path."
+  [path]
+  (if (.exists (io/as-file path))
+    (throw (Exception. "Duplicate file name."))
+    path))
+
 (defn fetch-imports!
   "Downloads all imports for a given ontology to the same directory."
   [request-details]
@@ -113,7 +126,9 @@
          (get-redirects)
          (last)
          (slurp)
-         (spit (str (:directory request-details) "/" (last (s/split url #"/")))))))
+         (spit
+          (validate-file
+           (get-path-from-purl (:directory request-details) url))))))
 
 (defn add-request
   "Adds the request details to the catalog."
@@ -133,8 +148,8 @@
   (let [redirs (get-redirects (second args))]
     (let [filepath (fetch! (first args) (last redirs))]
       (let [request-details (->> filepath
-                            (map-ontology)
-                            (map-request filepath redirs))]
-          (fetch-imports! request-details)
-          (add-request request-details))))
+                                 (map-ontology)
+                                 (map-request filepath redirs))]
+        (fetch-imports! request-details)
+        (add-request request-details))))
   (write-to-edn!))
