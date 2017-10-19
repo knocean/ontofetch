@@ -18,31 +18,6 @@
                   (edn/read-string (slurp +catalog+))
                   []))))
 
-(defn validate-dir
-  "Checks if a directory is in proper format and that it does not exist.
-   If so, returns dir name as str."
-  [dir]
-  (when-not (re-matches #"[A-Za-z0-9_]+" dir)
-    (throw (Exception. "Directory name can only include letters, numbers, or
-      underscores.")))
-  (when (.isDirectory (io/file dir))
-    (throw (Exception. "Directory must not already exist in the file system.")))
-  dir)
-
-(defn get-path-from-purl
-  "Creates a filepath from a directory and a purl,
-   giving the file the same name as the purl."
-  [dir url]
-  (str dir "/" (last (s/split url #"/"))))
-
-(defn fetch!
-  "Makes a directory and downloads given ontology to it. Returns path to file."
-  [dir final-url]
-  (do (let [filepath (get-path-from-purl dir final-url)]
-        (.mkdir (java.io.File. (validate-dir dir)))
-        (spit filepath (slurp final-url))
-        filepath)))
-
 (defn get-redirects
   "Manually follows redirects and returns a vector containing all redirect URLs.
    The final URL with content is the last entry."
@@ -55,6 +30,31 @@
         (301 302 303 307 308) (recur (conj redirs new-url) (:location headers))
         304 nil
         (throw (Exception. "Unhandled status."))))))
+
+(defn get-path-from-purl
+  "Creates a filepath from a directory and a purl,
+   giving the file the same name as the purl."
+  [dir url]
+  (str dir "/" (last (s/split url #"/"))))
+
+(defn validate-dir
+  "Checks if a directory is in proper format and that it does not exist.
+   If so, returns dir name as str."
+  [dir]
+  (when-not (re-matches #"[A-Za-z0-9_]+" dir)
+    (throw (Exception. "Directory name can only include letters, numbers, or
+      underscores.")))
+  (when (.isDirectory (io/file dir))
+    (throw (Exception. "Directory must not already exist in the file system.")))
+  dir)
+
+(defn fetch!
+  "Makes a directory and downloads given ontology to it. Returns path to file."
+  [dir final-url]
+  (do (let [filepath (get-path-from-purl dir final-url)]
+        (.mkdir (java.io.File. (validate-dir dir)))
+        (spit filepath (slurp final-url))
+        filepath)))
 
 ;; TODO: It's still parsing the whole file in (takes ~10 seconds for GO)
 (defn get-ont-metadata
@@ -86,7 +86,7 @@
   "Downloads imports and returns a list of import URLs from an RDF/XML OWL file."
   [xml]
   (loop [n 0 imports []]
-    (if (< n (count xml))
+    (if (< n (count (:content xml)))
       (let [content (nth (:content xml) n)]
         (if (= (:tag content) :owl:imports)
           (recur (+ n 1) (conj imports (get-in content [:attrs :rdf:resource])))
