@@ -3,7 +3,8 @@
    [clojure.string :as s]
    [ontofetch.files :as of]
    [ontofetch.http :as oh]
-   [ontofetch.xml :as ox])
+   [ontofetch.xml :as ox]
+   [clojure.data.xml :as data])
   (:gen-class))
 
 ;; TODO: General error handling (error logs)
@@ -24,8 +25,6 @@
    :redirect-path redirs,
    :metadata metadata})
 
-;; TODO: Generate catalog-v001.xml
-
 (defn -main
   [dir url]
   ;; Get list of redirs
@@ -45,4 +44,7 @@
                (fn [current-metadata]
                  (merge-with conj current-metadata {:imports imports})))
         (oh/fetch-imports! imports dir)))
-    (of/add-request! (map-request filepath redirs @ont-metadata))))
+    ;; Generate catalog-v001.xml
+    (of/spit-catalog-v001! dir (ox/catalog-v001))
+    ;; Add the request to the catalog
+    (of/spit-request! (map-request filepath redirs @ont-metadata))))

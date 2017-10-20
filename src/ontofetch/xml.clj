@@ -1,12 +1,28 @@
 (ns ontofetch.xml
   (:require
    [clojure.data.xml :as data]
+   [clojure.string :as s]
    [clojure.xml :as xml]
    [clojure.zip :as zip]))
 
 ;; TODO: Import & utilize Jena to parse ttl files (low priority)
 ;;       OWLAPI can read OBO & Manchester but is heavy and slow.
 ;;       Look at ROBOT for examples
+
+;; Used to track direct & indirect imports for use in catalog-v001
+(def all-imports (atom #{}))
+
+(defn catalog-v001
+  "Generates catalog-v001 from set of imports."
+  []
+  (data/indent-str
+   (data/sexp-as-element
+    [:catalog {:xmlns "urn:oasis:names:tc:entity:xmlns:xml:catalog"
+               :prefer "public"}
+     (map
+      (fn [uri]
+        [:uri {:name uri :uri (last (s/split uri #"/"))}])
+      @all-imports)])))
 
 (defn get-metadata-node
   "Returns the XML node containing the ontology metadata."
@@ -45,4 +61,10 @@
         (if (= (:tag content) :imports)
           (recur (+ n 1) (conj imports (get-in content [:attrs :rdf/resource])))
           (recur (+ n 1) imports)))
-      imports)))
+      (do
+        ;; Update imports set
+        (swap! all-imports
+               (fn [current-imports]
+                 (into current-imports imports)))
+        ;; Return list of imports
+        imports))))

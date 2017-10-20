@@ -28,7 +28,12 @@
     (.mkdir (java.io.File. dir)))
   dir)
 
-(defn add-request!
+(defn spit-request!
   "Adds the request details to the catalog."
   [request-details]
   (pp/pprint (conj catalog request-details) (io/writer +catalog+)))
+
+(defn spit-catalog-v001!
+  [dir catalog-v001]
+  (let [filepath (str dir "/catalog-v001.xml")]
+    (spit filepath catalog-v001)))
