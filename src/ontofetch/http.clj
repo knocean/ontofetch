@@ -13,11 +13,15 @@
   [url]
   (loop [redirs []
          new-url url]
-    (let [{:keys [status headers body error] :as res} @(http/request {:url new-url :method :head :follow-redirects false})]
+    (let [{:keys [status headers body error]
+           :as res} @(http/request {:url new-url
+                                    :method :head
+                                    :follow-redirects false})]
       (case status
         200 (conj redirs new-url)
         (301 302 303 307 308) (recur (conj redirs new-url) (:location headers))
         304 nil
+        404 nil
         (throw (Exception. "Unhandled status."))))))
 
 (defn get-path-from-purl
@@ -37,11 +41,12 @@
   [imports dir]
   (doseq [url imports]
     (if-not (contains? @fetched-urls url)
-      (let [redirs (get-redirects url)]
-        (swap! fetched-urls
-               (fn [current-urls] (into current-urls redirs)))
-        (let [filepath (get-path-from-purl dir url)]
-          (fetch-ontology! filepath (last redirs))
-          (let [more-imports (ox/get-imports (ox/get-metadata-node filepath))]
-            (if-not (empty? more-imports)
-              (fetch-imports! more-imports dir))))))))
+      (if-let [redirs (get-redirects url)]        ;; make sure redirs is not nil
+        ((swap! fetched-urls
+                (fn [current-urls] (into current-urls redirs)))
+         (let [filepath (get-path-from-purl dir url)]
+           (fetch-ontology! filepath (last redirs))
+           (let [more-imports (ox/get-imports (ox/get-metadata-node filepath))]
+             (if-not (empty? more-imports)
+               (fetch-imports! more-imports dir)))))
+        (println (str "Unable to fetch " url))))))  ;; log if redirs is nil
