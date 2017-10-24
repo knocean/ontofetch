@@ -9,10 +9,6 @@
 
 ;; TODO: General error handling (error logs)
 
-;; TODO: HTML output using hiccup (main focus)
-;;       See https://github.com/knocean/knode/blob/tree-views/src/knode/server/template.clj
-;;       for bootstrap implementation
-
 (def ont-metadata (atom {}))
 
 (defn map-request
@@ -24,6 +20,9 @@
    :location filepath,
    :redirect-path redirs,
    :metadata metadata})
+
+;; TODO: The HTML report being generated does not include the most recent request
+;;       Since catalog is not an atom... Change catalog to atom in files.clj
 
 (defn -main
   [dir url]
@@ -47,4 +46,6 @@
     ;; Generate catalog-v001.xml
     (of/spit-catalog-v001! dir (ox/catalog-v001))
     ;; Add the request to the catalog
-    (of/spit-request! (map-request filepath redirs @ont-metadata))))
+    (of/spit-request! (map-request filepath redirs @ont-metadata))
+    ;; Generate HTML report
+    (of/spit-report!)))

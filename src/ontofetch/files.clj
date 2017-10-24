@@ -3,9 +3,11 @@
    [clojure.edn :as edn]
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
-   [clojure.string :as s]))
+   [clojure.string :as s]
+   [ontofetch.html]))
 
 (def +catalog+ "catalog.edn")
+(def +report+ "report.html")
 (def catalog (if (.exists (io/as-file +catalog+))
                (edn/read-string (slurp +catalog+))
                []))
@@ -27,6 +29,10 @@
   (if (valid-dir? dir)
     (.mkdir (java.io.File. dir)))
   dir)
+
+(defn spit-report!
+  []
+  (spit +report+ (ontofetch.html/gen-html catalog)))
 
 (defn spit-request!
   "Adds the request details to the catalog."
