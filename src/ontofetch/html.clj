@@ -4,6 +4,15 @@
 
 (def +bootstrap+ "resources/static/css/bootstrap.min.css")
 
+(defn list-imports
+  [imports]
+  (if-not (empty? imports)
+    [:div "Direct Imports: "
+     [:ul
+      (for [url imports]
+        [:li url])]]
+    [:div "Direct Imports: none" [:br] [:br]]))
+
 (defn gen-entry
   "Generates HTML for each entry in the catalog"
   [catalog-entry]
@@ -19,13 +28,7 @@
                      :target "_blank"}
                  (:location catalog-entry)]
    [:br]
-   "Imports: "
-   (if-not (empty? (get-in catalog-entry [:metadata :imports]))
-     [:ul
-      (for [url (get-in catalog-entry [:metadata :imports])]
-        [:li url])]
-     (str "none"))
-   [:br] [:br]])
+   (list-imports (get-in catalog-entry [:metadata :imports]))])
 
 (defn gen-html
   "Generates a full HTML report of all requests."
@@ -41,8 +44,9 @@
     [:body
      [:div {:class "container"}
       [:div
-       [:h1 "Auto-Generated Ontofetch Report"]
+       [:h1 "ontofetch Requests"]
        [:p {:class "lead"}
-        "A history of past ontofetch requests. See the full metadata in catalog.edn"]]
+        "See the full metadata in "
+        [:a {:href "catalog.edn" :target "_blank"} "catalog.edn"]]]
       [:hr]
       (map gen-entry catalog)]]]))

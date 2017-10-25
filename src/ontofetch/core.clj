@@ -46,6 +46,6 @@
     ;; Generate catalog-v001.xml
     (of/spit-catalog-v001! dir (ox/catalog-v001))
     ;; Add the request to the catalog
-    (of/spit-request! (map-request filepath redirs @ont-metadata))
+    (of/update-catalog! (map-request filepath redirs @ont-metadata))
     ;; Generate HTML report
     (of/spit-report!)))

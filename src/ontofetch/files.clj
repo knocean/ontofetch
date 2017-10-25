@@ -8,9 +8,10 @@
 
 (def +catalog+ "catalog.edn")
 (def +report+ "report.html")
-(def catalog (if (.exists (io/as-file +catalog+))
-               (edn/read-string (slurp +catalog+))
-               []))
+(def catalog (atom
+              (if (.exists (io/as-file +catalog+))
+                (edn/read-string (slurp +catalog+))
+                [])))
 
 (defn valid-dir?
   "Checks if a directory is in proper format and that it does not exist.
@@ -32,12 +33,15 @@
 
 (defn spit-report!
   []
-  (spit +report+ (ontofetch.html/gen-html catalog)))
+  (spit +report+ (ontofetch.html/gen-html @catalog)))
 
-(defn spit-request!
+(defn update-catalog!
   "Adds the request details to the catalog."
   [request-details]
-  (pp/pprint (conj catalog request-details) (io/writer +catalog+)))
+  ;; Update catalog atom so it is current for the HTML report
+  (do
+    (swap! catalog (fn [cur] (conj cur request-details)))
+    (pp/pprint @catalog (io/writer +catalog+))))
 
 (defn spit-catalog-v001!
   [dir catalog-v001]
