@@ -2,7 +2,6 @@
   (:require
    [clojure.data.xml :as data]
    [clojure.string :as s]
-   [clojure.xml :as xml]
    [clojure.zip :as zip]))
 
 ;; TODO: Import & utilize Jena to parse ttl files (low priority)
@@ -51,7 +50,7 @@
         (if (= (:tag content) :versionIRI)
           (get-in content [:attrs :rdf/resource])
           (recur (+ n 1))))
-      "N/A")))
+      "N/A")))    ;; Not found, return N/A
 
 (defn get-imports
   "Returns a list of import URLs from an RDF/XML OWL file."
@@ -63,9 +62,7 @@
           (recur (+ n 1) (conj imports (get-in content [:attrs :rdf/resource])))
           (recur (+ n 1) imports)))
       (do
-        ;; Update imports set
         (swap! all-imports
                (fn [current-imports]
                  (into current-imports imports)))
-        ;; Return list of imports
         imports))))

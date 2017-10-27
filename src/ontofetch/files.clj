@@ -38,10 +38,9 @@
 (defn update-catalog!
   "Adds the request details to the catalog."
   [request-details]
-  ;; Update catalog atom so it is current for the HTML report
   (do
-    (swap! catalog (fn [cur] (conj cur request-details)))
-    (pp/pprint @catalog (io/writer +catalog+))))
+   (swap! catalog (fn [cur] (conj cur request-details)))
+   (pp/pprint @catalog (io/writer +catalog+))))
 
 (defn spit-catalog-v001!
   [dir catalog-v001]

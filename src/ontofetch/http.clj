@@ -1,11 +1,11 @@
 (ns ontofetch.http
   (:require
    [clojure.string :as s]
-   [ontofetch.files :as of]
-   [ontofetch.xml :as ox]
+   [ontofetch.xml :as xml]
    [org.httpkit.client :as http]))
 
 (def fetched-urls (atom #{}))
+(def error-log (atom []))
 
 (defn get-redirects
   "Manually follows redirects and returns a vector containing all redirect URLs.
@@ -20,9 +20,7 @@
       (case status
         200 (conj redirs new-url)
         (301 302 303 307 308) (recur (conj redirs new-url) (:location headers))
-        304 nil
-        404 nil
-        (throw (Exception. "Unhandled status."))))))
+        nil))))       ;; Anthing else will not be returned
 
 (defn get-path-from-purl
   "Creates a filepath from a directory and a purl,
@@ -35,18 +33,21 @@
   [filepath final-url]
   (spit filepath (slurp final-url)))
 
+;; TODO: Do we want to set a timeout for each import?
+
 (defn fetch-imports!
   "Fetches each import file, and subsequently its imports.
    Checks for duplicates before fetching."
   [imports dir]
   (doseq [url imports]
-    (if-not (contains? @fetched-urls url)
-      (if-let [redirs (get-redirects url)]        ;; make sure redirs is not nil
-        ((swap! fetched-urls
+    (if-not (contains? @fetched-urls url)             ;; Check if import is already fetched
+      (if-let [redirs (get-redirects url)]            ;; Make sure redirs is not nil
+        ((swap! fetched-urls                          ;; Update fetched URLs
                 (fn [current-urls] (into current-urls redirs)))
          (let [filepath (get-path-from-purl dir url)]
-           (fetch-ontology! filepath (last redirs))
-           (let [more-imports (ox/get-imports (ox/get-metadata-node filepath))]
-             (if-not (empty? more-imports)
+           (fetch-ontology! filepath (last redirs))   ;; Fetch the import
+           (let [more-imports (xml/get-imports (xml/get-metadata-node filepath))]
+             (if-not (empty? more-imports)            ;; Get imports of import
                (fetch-imports! more-imports dir)))))
-        (println (str "Unable to fetch " url))))))  ;; log if redirs is nil
+        (swap! error-log                              ;; Log if redirs is nil
+               (fn [cur] (into cur (str "Unable to fetch import: " url))))))))

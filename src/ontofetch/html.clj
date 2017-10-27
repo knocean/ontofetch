@@ -5,6 +5,8 @@
 (def +bootstrap+ "resources/static/css/bootstrap.min.css")
 
 (defn list-imports
+  "Generates a list element for each import,
+   as lost as imports is not empty."
   [imports]
   (if-not (empty? imports)
     [:div "Direct Imports: "
