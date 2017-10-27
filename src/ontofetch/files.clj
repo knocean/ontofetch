@@ -4,7 +4,9 @@
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
    [clojure.string :as s]
-   [ontofetch.html]))
+   [ontofetch.html])
+  (:import
+   [java.util.zip ZipEntry ZipOutputStream]))
 
 (def +catalog+ "catalog.edn")
 (def +report+ "report.html")
@@ -25,24 +27,36 @@
   true)
 
 (defn make-dir!
-  "Checks if arg is a valid dir name, then makes a new directory & returns the name."
+  "Checks if arg is a valid dir name,
+   then makes a new directory & returns the name."
   [dir]
   (if (valid-dir? dir)
     (.mkdir (java.io.File. dir)))
   dir)
 
 (defn spit-report!
+  "Generates the HTML report in cuurent directory."
   []
   (spit +report+ (ontofetch.html/gen-html @catalog)))
 
 (defn update-catalog!
-  "Adds the request details to the catalog."
+  "Adds the request details to the catalog,
+   then writes the catalog to current directory."
   [request-details]
   (do
-   (swap! catalog (fn [cur] (conj cur request-details)))
-   (pp/pprint @catalog (io/writer +catalog+))))
+    (swap! catalog (fn [cur] (conj cur request-details)))
+    (pp/pprint @catalog (io/writer +catalog+))))
 
 (defn spit-catalog-v001!
   [dir catalog-v001]
   (let [filepath (str dir "/catalog-v001.xml")]
     (spit filepath catalog-v001)))
+
+(defn zip-folder!
+  "Creates a compressed file containing directory contents."
+  [dir]
+  (with-open [zip (ZipOutputStream. (io/output-stream (str dir ".zip")))]
+    (doseq [f (file-seq (io/file dir)) :when (.isFile f)]
+      (.putNextEntry zip (ZipEntry. (.getPath f)))
+      (io/copy f zip)
+      (.closeEntry zip))))
