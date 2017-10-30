@@ -9,19 +9,26 @@
 ;;       Look at ROBOT for examples
 
 ;; Used to track direct & indirect imports for use in catalog-v001
-(def all-imports (atom #{}))
+
+;; TODO: Find a better way to do this, without using atom
+(def all-imports (atom {}))
 
 (defn catalog-v001
   "Generates catalog-v001 from set of imports."
-  []
-  (data/indent-str
-   (data/sexp-as-element
-    [:catalog {:xmlns "urn:oasis:names:tc:entity:xmlns:xml:catalog"
-               :prefer "public"}
-     (map
-      (fn [uri]
-        [:uri {:name uri :uri (last (s/split uri #"/"))}])
-      @all-imports)])))
+  [i-map]
+  (let [imports (->> (vals i-map)
+                     (into (keys i-map))
+                     flatten
+                     (into #{})
+                     (filter identity))]
+    (data/indent-str
+     (data/sexp-as-element
+      [:catalog {:xmlns "urn:oasis:names:tc:entity:xmlns:xml:catalog"
+                 :prefer "public"}
+       (map
+        (fn [uri]
+          [:uri {:name uri :uri (last (s/split uri #"/"))}])
+        imports)]))))
 
 (defn get-metadata-node
   "Returns the XML node containing the ontology metadata."
@@ -52,6 +59,9 @@
           (recur (+ n 1))))
       "N/A")))    ;; Not found, return N/A
 
+;; TODO: Remove atom
+;;       Change to tree structure
+
 (defn get-imports
   "Returns a list of import URLs from an RDF/XML OWL file."
   [xml]
@@ -61,8 +71,6 @@
         (if (= (:tag content) :imports)
           (recur (+ n 1) (conj imports (get-in content [:attrs :rdf/resource])))
           (recur (+ n 1) imports)))
-      (do
-        (swap! all-imports
-               (fn [current-imports]
-                 (into current-imports imports)))
-        imports))))
+      (if-not (empty? imports)
+        imports
+        nil))))

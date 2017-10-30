@@ -4,11 +4,12 @@
 
 (def +bootstrap+ "resources/static/css/bootstrap.min.css")
 
+;; TODO: Change to deal with map, currently just getting keys (direct imports)
 (defn list-imports
   "Generates a list element for each import,
-   as lost as imports is not empty."
+   as long as imports exists."
   [imports]
-  (if-not (empty? imports)
+  (if-not (nil? imports)
     [:div "Direct Imports: "
      [:ul
       (for [url imports]
@@ -30,7 +31,7 @@
                      :target "_blank"}
                  (:location catalog-entry)]
    [:br]
-   (list-imports (get-in catalog-entry [:metadata :imports]))])
+   (list-imports (keys (get-in catalog-entry [:metadata :imports])))])
 
 (defn gen-html
   "Generates a full HTML report of all requests."

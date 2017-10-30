@@ -52,6 +52,7 @@
   (let [filepath (str dir "/catalog-v001.xml")]
     (spit filepath catalog-v001)))
 
+;; TODO: Put in main and del dir
 (defn zip-folder!
   "Creates a compressed file containing directory contents."
   [dir]

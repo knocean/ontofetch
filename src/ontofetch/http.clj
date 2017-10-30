@@ -5,7 +5,6 @@
    [org.httpkit.client :as http]))
 
 (def fetched-urls (atom #{}))
-(def error-log (atom []))
 
 (defn get-redirects
   "Manually follows redirects and returns a vector containing all redirect URLs.
@@ -33,21 +32,43 @@
   [filepath final-url]
   (spit filepath (slurp final-url)))
 
-;; TODO: Do we want to set a timeout for each import?
+;; TODO: Set timeouts
+;; TODO: Tests for error handling
+;; TODO: Return IRIs, not filepaths
 
-(defn fetch-imports!
-  "Fetches each import file, and subsequently its imports.
-   Checks for duplicates before fetching."
+(defn fetch-direct!
+  "Fetches each direct import file and returns list of fetched imports."
   [imports dir]
-  (doseq [url imports]
-    (if-not (contains? @fetched-urls url)             ;; Check if import is already fetched
-      (if-let [redirs (get-redirects url)]            ;; Make sure redirs is not nil
-        ((swap! fetched-urls                          ;; Update fetched URLs
-                (fn [current-urls] (into current-urls redirs)))
-         (let [filepath (get-path-from-purl dir url)]
-           (fetch-ontology! filepath (last redirs))   ;; Fetch the import
-           (let [more-imports (xml/get-imports (xml/get-metadata-node filepath))]
-             (if-not (empty? more-imports)            ;; Get imports of import
-               (fetch-imports! more-imports dir)))))
-        (swap! error-log                              ;; Log if redirs is nil
-               (fn [cur] (into cur (str "Unable to fetch import: " url))))))))
+  (loop [purls imports
+         fetched []]
+    (let [purl (first purls)]
+      (if-let [final-url (last (get-redirects purl))]
+        (do
+          (fetch-ontology! (get-path-from-purl dir purl) final-url)
+          (if-not (empty? (rest purls))
+            (recur (rest purls) (conj fetched purl))
+            (conj fetched purl)))
+        (do
+          (println "Cannot fetch direct import " purl)
+          ;; Will not add to list of fetched imports
+          (if-not (empty? (rest purls))
+            (recur (rest purls) fetched)
+            fetched))))))
+
+(defn fetch-indirect!
+  "Fetches each indirect import file and returns
+   map of direct imports (key) and their indirect imports (val)."
+  [imports dir]
+  (loop [purls imports i-map {} fetched #{}]
+    (let [parent (first purls)
+          others (rest purls)
+          more-imports (xml/get-imports (xml/get-metadata-node (get-path-from-purl dir parent)))]
+      (doseq [purl more-imports]
+        (if-let [final-url (last (get-redirects purl))]
+          (if-not (contains? fetched purl)
+            (fetch-ontology! (get-path-from-purl dir purl) final-url))
+            ;; Do not need to re-fetch
+          (println "Cannot fetch indirect import " purl)))
+      (if-not (empty? others)
+        (recur others (into i-map {parent more-imports}) (into fetched more-imports))
+        (into i-map {parent more-imports})))))
