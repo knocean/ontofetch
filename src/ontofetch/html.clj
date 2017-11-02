@@ -4,17 +4,22 @@
 
 (def +bootstrap+ "resources/static/css/bootstrap.min.css")
 
-;; TODO: Change to deal with map, currently just getting keys (direct imports)
+(defn list-indirects
+  "Helper fn to list indirect imports under the direct import."
+  [indirects]
+  (when (seq indirects)
+    [(into [:ul] (mapv (fn [i] [:li i]) indirects))]))
+
 (defn list-imports
   "Generates a list element for each import,
    as long as imports exists."
   [imports]
-  (if-not (nil? imports)
-    [:div "Direct Imports: "
-     [:ul
-      (for [url imports]
-        [:li url])]]
-    [:div "Direct Imports: none" [:br] [:br]]))
+  (if (some? imports)
+    [:div "Imports: "
+     (into [:ul]
+           (for [[url indirects] imports]
+             (into [:li url] (list-indirects indirects))))]
+    [:div "Imports: none" [:br] [:br]]))
 
 (defn gen-entry
   "Generates HTML for each entry in the catalog"
@@ -31,7 +36,7 @@
                      :target "_blank"}
                  (:location catalog-entry)]
    [:br]
-   (list-imports (keys (get-in catalog-entry [:metadata :imports])))])
+   (list-imports (get-in catalog-entry [:metadata :imports]))])
 
 (defn gen-html
   "Generates a full HTML report of all requests."
