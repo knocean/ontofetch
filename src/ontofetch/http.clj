@@ -4,8 +4,6 @@
    [ontofetch.xml :as xml]
    [org.httpkit.client :as http]))
 
-(def fetched-urls (atom #{}))
-
 (defn get-redirects
   "Manually follows redirects and returns a vector containing all redirect URLs.
    The final URL with content is the last entry."
@@ -27,14 +25,27 @@
   [dir url]
   (str dir "/" (last (s/split url #"/"))))
 
+(defn invoke-timeout [f timeout-ms url]
+  (let [thr (Thread/currentThread)
+        fut (future (Thread/sleep timeout-ms)
+                    (.interrupt thr))]
+    (try (f)
+         (catch Exception e
+           (println (str "Request timeout for " url)))
+         (finally
+           (future-cancel fut)))))
+
+(defmacro timeout [url ms & body] `(invoke-timeout (fn [] ~@body) ~ms ~url))
+
 (defn fetch-ontology!
   "Downloads an ontology from URL to a given filepath. Returns path to file."
   [filepath final-url]
-  (spit filepath (slurp final-url)))
+  (->> final-url
+       slurp
+       (spit filepath)
+       (timeout final-url 20000)))
 
-;; TODO: Set timeouts
 ;; TODO: Tests for error handling
-;; TODO: Return IRIs, not filepaths
 
 (defn fetch-direct!
   "Fetches each direct import file and returns list of fetched imports."

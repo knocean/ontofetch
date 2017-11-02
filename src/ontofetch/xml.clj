@@ -10,9 +10,6 @@
 
 ;; Used to track direct & indirect imports for use in catalog-v001
 
-;; TODO: Find a better way to do this, without using atom
-(def all-imports (atom {}))
-
 (defn catalog-v001
   "Generates catalog-v001 from set of imports."
   [i-map]
@@ -58,9 +55,6 @@
           (get-in content [:attrs :rdf/resource])
           (recur (+ n 1))))
       "N/A")))    ;; Not found, return N/A
-
-;; TODO: Remove atom
-;;       Change to tree structure
 
 (defn get-imports
   "Returns a list of import URLs from an RDF/XML OWL file."
