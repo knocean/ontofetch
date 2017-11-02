@@ -4,7 +4,8 @@
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
    [clojure.string :as s]
-   [ontofetch.html])
+   [clojure.tools.file-utils :as ctfu]
+   [ontofetch.html :as html])
   (:import
    [java.util.zip ZipEntry ZipOutputStream]))
 
@@ -37,7 +38,7 @@
 (defn spit-report!
   "Generates the HTML report in cuurent directory."
   []
-  (spit +report+ (ontofetch.html/gen-html @catalog)))
+  (spit +report+ (html/gen-html @catalog)))
 
 (defn update-catalog!
   "Adds the request details to the catalog,
@@ -54,10 +55,12 @@
 
 ;; TODO: Put in main and del dir
 (defn zip-folder!
-  "Creates a compressed file containing directory contents."
+  "Creates a compressed file containing directory contents.
+   Deletes the original directory when complete."
   [dir]
-  (with-open [zip (ZipOutputStream. (io/output-stream (str dir ".zip")))]
-    (doseq [f (file-seq (io/file dir)) :when (.isFile f)]
-      (.putNextEntry zip (ZipEntry. (.getPath f)))
-      (io/copy f zip)
-      (.closeEntry zip))))
+  ((with-open [zip (ZipOutputStream. (io/output-stream (str dir ".zip")))]
+     (doseq [f (file-seq (io/file dir)) :when (.isFile f)]
+       (.putNextEntry zip (ZipEntry. (.getPath f)))
+       (io/copy f zip)
+       (.closeEntry zip)))
+   (ctfu/recursive-delete (io/file dir))))

@@ -36,4 +36,5 @@
                                          :version-iri (xml/get-version-iri xml-tree)
                                          :imports i-map}))
           (files/spit-catalog-v001! dir (xml/catalog-v001 i-map))
-          (files/spit-report!))))))
+          (files/spit-report!)
+          (files/zip-folder! dir))))))
