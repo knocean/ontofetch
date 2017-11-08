@@ -53,14 +53,20 @@
   (let [filepath (str dir "/catalog-v001.xml")]
     (spit filepath catalog-v001)))
 
-;; TODO: Put in main and del dir
 (defn zip-folder!
   "Creates a compressed file containing directory contents.
    Deletes the original directory when complete."
   [dir]
-  ((with-open [zip (ZipOutputStream. (io/output-stream (str dir ".zip")))]
-     (doseq [f (file-seq (io/file dir)) :when (.isFile f)]
-       (.putNextEntry zip (ZipEntry. (.getPath f)))
-       (io/copy f zip)
-       (.closeEntry zip)))
-   (ctfu/recursive-delete (io/file dir))))
+  (with-open [zip (ZipOutputStream. (io/output-stream (str dir ".zip")))]
+    (doseq [f (file-seq (io/file dir)) :when (.isFile f)]
+      (.putNextEntry zip (ZipEntry. (.getPath f)))
+      (io/copy f zip)
+      (.closeEntry zip)))
+  (ctfu/recursive-delete (io/file dir)))
+
+(defn gen-content!
+  [dir request-details catalog-v001]
+  (update-catalog! request-details)
+  (spit-catalog-v001! dir catalog-v001)
+  (spit-report!)
+  (zip-folder! dir))

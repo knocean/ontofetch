@@ -3,12 +3,11 @@
    [clojure.string :as s]
    [ontofetch.files :as files]
    [ontofetch.http :as http]
-   [ontofetch.xml :as xml])
+   [ontofetch.parse.jena :as jena]
+   [ontofetch.parse.xml :as xml])
   (:gen-class))
 
 ;; TODO: General error handling (error logs)
-
-;; TODO: Add time to date (timestamp)
 
 ;; Make association between what you asked for in import and the IRI that you ended up with
 ;; Look at obi-edit file (core.owl import not resolving)
@@ -18,23 +17,51 @@
   [filepath redirs metadata]
   {:request-url (first redirs),
    :directory (first (s/split filepath #"/")),
-   :request-date (.format (java.text.SimpleDateFormat. "yyyy-MM-dd") (java.util.Date.)),
+   :request-date (.format (java.text.SimpleDateFormat. "yyyy-MM-dd HH:mm:ss") (java.util.Date.)),
    :location filepath,
    :redirect-path redirs,
-   :metadata metadata})
+   :metadata {:ontology-iri (first metadata)
+              :version-iri (second metadata)
+              :imports (last metadata)}})
+
+(defn try-jena
+  "Given redirects to an ontology, a directory that it was downloaded in,
+   and the ontology filepath, read the triples to get the metadata. And more..."
+  [redirs dir filepath]
+  (let [trps (jena/read-triples filepath)]
+    (let [import-map (->> (jena/get-imports trps)
+                          (http/fetch-direct! dir)
+                          (http/fetch-indirect! dir))]
+      (files/gen-content!
+       dir
+       (map-request
+        filepath
+        redirs
+        [(jena/get-ontology-iri trps) "undefined" import-map])
+       (xml/catalog-v001 import-map)))))
+
+(defn try-xml
+  "Given redirects to an ontology, a directory that it was downloaded in,
+   and the ontology filepath, get metadata and generate by parsing XML. And more..."
+  [redirs dir filepath]
+  (let [xml (xml/get-metadata-node filepath)]
+    (let [import-map (->> (xml/get-imports xml)
+                          (http/fetch-direct! dir)
+                          (http/fetch-indirect! dir))]
+      (files/gen-content!
+       dir
+       (map-request
+        filepath
+        redirs
+        [(xml/get-ontology-iri xml) (xml/get-version-iri xml) import-map])
+       (xml/catalog-v001 import-map)))))
 
 (defn -main
   [dir url]
   (let [redirs (http/get-redirects url)
         filepath (http/get-path-from-purl (files/make-dir! dir) url)]
     (http/fetch-ontology! filepath (last redirs))
-    (let [xml-tree (xml/get-metadata-node filepath)]
-      (if-let [imports (xml/get-imports xml-tree)]
-        (let [i-map (http/fetch-indirect! (http/fetch-direct! imports dir) dir)]
-          (files/update-catalog!
-           (map-request filepath redirs {:ontology-iri (xml/get-ontology-iri xml-tree)
-                                         :version-iri (xml/get-version-iri xml-tree)
-                                         :imports i-map}))
-          (files/spit-catalog-v001! dir (xml/catalog-v001 i-map))
-          (files/spit-report!)
-          (files/zip-folder! dir))))))
+    (try
+      (try-xml redirs dir filepath)
+      (try-jena redirs dir filepath)
+      (catch Exception e (.getMessage e)))))
