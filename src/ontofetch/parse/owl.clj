@@ -36,7 +36,7 @@
       .toString
       format-iri))
 
-(defn full-get-imports
+(defn get-imports
   "Given an OWLOntology, return a map of direct (key)
    and indirect imports (vals)."  
   [owl-ont]
@@ -48,8 +48,6 @@
         (if-not (empty? (rest is))
           (recur (rest is) (conj import-map {dir indirs})) 
           (conj import-map {dir indirs}))))))
-
-(def get-imports (memoize full-get-imports))
 
 (defn save-owl-ont!
   "Given an OWLOntology and a filepath, save the ontology." 

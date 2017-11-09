@@ -54,16 +54,17 @@
   [redirs dir filepath]
   (println "Trying to parse with OWLAPI...")
   (let [owl-ont (owl/load-ont filepath)]
-    (owl/fetch-imports! dir owl-ont)
-    (files/gen-content!
-      dir
-      (u/map-request
-        filepath
-        redirs
-        [(owl/get-ontology-iri owl-ont)
-         (owl/get-version-iri owl-ont)
-         (owl/get-imports owl-ont)])
-      (xml/catalog-v001 (owl/get-imports owl-ont)))))
+    (let [import-map (owl/get-imports owl-ont)])
+      (owl/fetch-imports! dir owl-ont)
+      (files/gen-content!
+        dir
+        (u/map-request
+          filepath
+          redirs
+          [(owl/get-ontology-iri owl-ont)
+           (owl/get-version-iri owl-ont)
+           (owl/get-imports owl-ont)])
+        (xml/catalog-v001 (owl/get-imports owl-ont)))))
 
 (defn -main
   [dir url]
