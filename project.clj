@@ -6,6 +6,7 @@
   :dependencies [[clojure-tools "1.1.3"]
            [hiccup "1.0.5"]
            [http-kit "2.1.18"]
+           [net.sourceforge.owlapi/owlapi-distribution "5.1.0"]
            [org.apache.jena/jena-arq "2.13.0"]
            [org.clojure/clojure "1.8.0"]
            [org.clojure/data.xml "0.0.8"]]

@@ -1,11 +1,11 @@
 (ns ontofetch.parse.jena
   (:require [clojure.string :as s])
   (:import
-    (com.hp.hpl.jena.graph Triple Node_URI Node_Blank Node_Literal)
-    (com.hp.hpl.jena.sparql.core Quad)
-    (com.hp.hpl.jena.rdf.model RDFNode)
-    (org.apache.jena.riot.system StreamRDF)
-    (org.apache.jena.riot RDFDataMgr RDFLanguages Lang)))
+   (com.hp.hpl.jena.graph Triple Node_URI Node_Blank Node_Literal)
+   (com.hp.hpl.jena.sparql.core Quad)
+   (com.hp.hpl.jena.rdf.model RDFNode)
+   (org.apache.jena.riot.system StreamRDF)
+   (org.apache.jena.riot RDFDataMgr RDFLanguages Lang)))
 
 (defmulti read-node
   class)
@@ -79,8 +79,8 @@
   "Given a source path, return the triples."
   [source]
   (let [triples (atom [])]
-   (RDFDataMgr/parse (stream-triples triples) source)
-   @triples))
+    (RDFDataMgr/parse (stream-triples triples) source)
+    @triples))
 
 (defn get-ontology-iri
   "Given a vector of all triples from an ontology,

@@ -44,9 +44,8 @@
   "Adds the request details to the catalog,
    then writes the catalog to current directory."
   [request-details]
-  (do
-    (swap! catalog (fn [cur] (conj cur request-details)))
-    (pp/pprint @catalog (io/writer +catalog+))))
+  (swap! catalog (fn [cur] (conj cur request-details)))
+  (pp/pprint @catalog (io/writer +catalog+)))
 
 (defn spit-catalog-v001!
   [dir catalog-v001]

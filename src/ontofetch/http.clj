@@ -1,9 +1,10 @@
 (ns ontofetch.http
   (:require
-   [clojure.string :as s]
+   [ontofetch.utils :as u]
    [ontofetch.parse.xml :as xml]
    [org.httpkit.client :as http]))
 
+;; TODO: Handle ftp
 (defn get-redirects
   "Manually follows redirects and returns a vector containing all redirect URLs.
    The final URL with content is the last entry."
@@ -18,12 +19,6 @@
         200 (conj redirs new-url)
         (301 302 303 307 308) (recur (conj redirs new-url) (:location headers))
         nil))))       ;; Anthing else will not be returned
-
-(defn get-path-from-purl
-  "Creates a filepath from a directory and a purl,
-   giving the file the same name as the purl."
-  [dir url]
-  (str dir "/" (last (s/split url #"/"))))
 
 (defn invoke-timeout [f timeout-ms]
   (let [thr (Thread/currentThread)
@@ -56,7 +51,7 @@
       (let [purl (first purls)]
         (if-let [final-url (last (get-redirects purl))]
           (do
-            (fetch-ontology! (get-path-from-purl dir purl) final-url)
+            (fetch-ontology! (u/get-path-from-purl dir purl) final-url)
             (if-not (empty? (rest purls))
               (recur (rest purls) (conj fetched purl))
               (conj fetched purl)))
@@ -74,12 +69,20 @@
     (loop [purls imports i-map {} fetched #{}]
       (let [parent (first purls)
             others (rest purls)
-            more-imports (xml/get-imports (xml/get-metadata-node (get-path-from-purl dir parent)))]
+            more-imports (xml/get-imports (xml/get-metadata-node (u/get-path-from-purl dir parent)))]
         (doseq [purl more-imports]
           (if-let [final-url (last (get-redirects purl))]
             (if-not (contains? fetched purl)
-              (fetch-ontology! (get-path-from-purl dir purl) final-url))
+              (fetch-ontology! (u/get-path-from-purl dir purl) final-url))
             (println "Cannot fetch indirect import " purl)))
         (if-not (empty? others)
           (recur others (into i-map {parent more-imports}) (into fetched more-imports))
           (into i-map {parent more-imports}))))))
+
+(defn map-imports
+  "Given a list of direct imports and a directory,
+   save all direct & indirect imports, and return a map of them."
+  [dir imports]
+  (->> imports
+       (fetch-direct! dir)
+       (fetch-indirect! dir)))
