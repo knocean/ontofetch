@@ -1,8 +1,8 @@
 (defproject ontofetch "0.1.0-SNAPSHOT"
-  :description "FIXME: write description"
-  :url "http://example.com/FIXME"
-  :license {:name "Eclipse Public License"
-            :url "http://www.eclipse.org/legal/epl-v10.html"}
+  :description "A tool for fetching OWL ontologies"
+  :url "https://github.com/knocean/ontofetch"
+  :license {:name "BSD 3-Clause License"
+            :url "https://opensource.org/licenses/BSD-3-Clause"}
   :dependencies [[clojure-tools "1.1.3"]
            [hiccup "1.0.5"]
            [http-kit "2.1.18"]
