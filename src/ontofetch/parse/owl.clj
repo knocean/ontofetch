@@ -13,28 +13,21 @@
   (let [manager (OWLManager/createOWLOntologyManager)]
     (.loadOntologyFromOntologyDocument manager (io/file filepath))))
 
-(defn format-iri
-  "Format IRI string returned from OWLAPI." 
-  [iri]
-  (subs iri (inc (.indexOf iri "[")) (.indexOf iri "]")))
-
 (defn get-ontology-iri
   "Given an OWLOntology, return the Ontology IRI." 
   [owl-ont]
-  (-> owl-ont
-      .getOntologyID
-      .getOntologyIRI
-      .toString
-      format-iri))
+  (let [iri (.getOntologyIRI (.getOntologyID owl-ont))]
+    (if (.isPresent iri)
+      (.toString (.get iri))
+      nil)))
 
 (defn get-version-iri
   "Given an OWLOntology, return the Version IRI." 
   [owl-ont]
-  (-> owl-ont
-      .getOntologyID
-      .getVersionIRI
-      .toString
-      format-iri))
+  (let [iri (.getVersionIRI (.getOntologyID owl-ont))]
+    (if (.isPresent iri)
+      (.toString (.get iri))
+      nil)))
 
 (defn get-imports
   "Given an OWLOntology, return a map of direct (key)
