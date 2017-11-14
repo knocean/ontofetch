@@ -47,8 +47,7 @@
       (let [content (nth (:content xml) n)]
         (if (= (:tag content) :versionIRI)
           (get-in content [:attrs :rdf/resource])
-          (recur (+ n 1))))
-      "undefined")))
+          (recur (+ n 1)))))))
 
 (defn get-imports
   "Returns a list of import URLs from an RDF/XML OWL file."

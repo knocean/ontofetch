@@ -22,31 +22,32 @@
   (let [xml (xml/get-metadata-node filepath)]
     (let [import-map (http/map-imports dir (xml/get-imports xml))]
       (files/gen-content!
-        dir
-        (u/map-request
-          filepath
-          redirs
-          [(xml/get-ontology-iri xml)
-           (xml/get-version-iri xml)
-           import-map])
-        (xml/catalog-v001 import-map)))))
+       dir
+       (u/map-request
+        filepath
+        redirs
+        [(xml/get-ontology-iri xml)
+         (xml/get-version-iri xml)
+         import-map])
+       (xml/catalog-v001 import-map)))))
 
 (defn try-jena
   "Given redirects to an ontology, a directory that it was downloaded in,
-   and the ontology filepath, read the triples to get the metadata. And more..."
+   and the ontology filepath, read the triples to get the metadata.
+   And more..."
   [redirs dir filepath]
   (println "Trying to parse with Jena...")
   (let [trps (jena/read-triples filepath)]
     (let [import-map (http/map-imports dir (jena/get-imports trps))]
       (files/gen-content!
-        dir
-        (u/map-request
-          filepath
-          redirs
-          [(jena/get-ontology-iri trps)
-           "undefined"
-           import-map])
-        (xml/catalog-v001 import-map)))))
+       dir
+       (u/map-request
+        filepath
+        redirs
+        [(jena/get-ontology-iri trps)
+         (jena/get-version-iri trps)
+         import-map])
+       (xml/catalog-v001 import-map)))))
 
 (defn try-owl
   "Given redirects to an ontology, a directory that it was downloaded in,
@@ -55,16 +56,16 @@
   (println "Trying to parse with OWLAPI...")
   (let [owl-ont (owl/load-ont filepath)]
     (let [import-map (owl/get-imports owl-ont)])
-      (owl/fetch-imports! dir owl-ont)
-      (files/gen-content!
-        dir
-        (u/map-request
-          filepath
-          redirs
-          [(owl/get-ontology-iri owl-ont)
-           (owl/get-version-iri owl-ont)
-           (owl/get-imports owl-ont)])
-        (xml/catalog-v001 (owl/get-imports owl-ont)))))
+    (owl/fetch-imports! dir owl-ont)
+    (files/gen-content!
+     dir
+     (u/map-request
+      filepath
+      redirs
+      [(owl/get-ontology-iri owl-ont)
+       (owl/get-version-iri owl-ont)
+       (owl/get-imports owl-ont)])
+     (xml/catalog-v001 (owl/get-imports owl-ont)))))
 
 (defn -main
   [dir url]

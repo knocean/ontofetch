@@ -56,6 +56,7 @@
        (when-not (s/blank? lang)
          {:lang lang})))))
 
+;; TODO: Possible to JUST get metadata?
 (defn stream-triples
   "Given atom for a sequence for ExpandedTriples,
    return an instance of StreamRDF for collecting triples.
@@ -84,19 +85,25 @@
 
 (defn get-ontology-iri
   "Given a vector of all triples from an ontology,
-   returns the ontology IRI from an TTL OWL file."
+   return the ontology IRI."
   [all-triples]
-  (loop [triples all-triples]
-    (let [triple (first triples)]
-      (if (= "http://www.w3.org/2002/07/owl#Ontology" (nth triple 2))
-        (first triple)
-        (if-not (empty? (rest triples))
-          (recur (rest triples))
-          "N/A")))))
+  (->> all-triples
+       (filter #(= "http://www.w3.org/2002/07/owl#Ontology" (nth % 2)))
+       flatten
+       first))
+
+(defn get-version-iri
+  "Given a vector of all triples from an ontology,
+   return the version IRI (or nil)."
+  [all-triples]
+  (->> all-triples
+       (filter #(= "http://www.w3.org/2002/07/owl#versionIRI" (second %)))
+       flatten
+       last))
 
 (defn get-imports
   "Given a vector of all triples from an ontology,
-   returns a list of direct imports."
+   return a list of direct imports (or nil)."
   [all-triples]
   (->> all-triples
        (filter #(= "http://www.w3.org/2002/07/owl#imports" (second %)))

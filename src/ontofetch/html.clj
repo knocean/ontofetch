@@ -30,7 +30,9 @@
          :target "_blank"}
      (:request-url catalog-entry)]
     (str " on " (:request-date catalog-entry))]
-   (str "Version: " (get-in catalog-entry [:metadata :version-iri]))
+   (if-let [v (get-in catalog-entry [:metadata :version-iri])]
+     (str "Version: " (get-in catalog-entry [:metadata :version-iri]))
+     "Version: undefined")
    [:br]
    "Location: " [:a {:href (:location catalog-entry)
                      :target "_blank"}
