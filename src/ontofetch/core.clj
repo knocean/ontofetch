@@ -20,16 +20,20 @@
   [redirs dir filepath]
   (println "Trying to parse RDF/XML...")
   (let [xml (xml/get-metadata-node filepath)]
-    (let [import-map (http/map-imports dir (xml/get-imports xml))]
-      (files/gen-content!
-       dir
-       (u/map-request
-        filepath
-        redirs
-        [(xml/get-ontology-iri xml)
-         (xml/get-version-iri xml)
-         import-map])
-       (xml/catalog-v001 import-map)))))
+    (let [imports (xml/get-imports xml)]
+      (http/fetch-direct! dir imports)
+      (let [i-map (xml/get-more-imports imports dir)]
+        (for [indirs (vals i-map)]
+          ((partial http/fetch-direct! dir) indirs))
+        (files/gen-content!
+         dir
+         (u/map-request
+          filepath
+          redirs
+          [(xml/get-ontology-iri xml)
+           (xml/get-version-iri xml)
+           i-map])
+         (xml/catalog-v001 i-map))))))
 
 (defn try-jena
   "Given redirects to an ontology, a directory that it was downloaded in,
@@ -54,7 +58,7 @@
    and the ontology filepath, use OWLAPI to parse the ontology. And more..."
   [redirs dir filepath]
   (println "Trying to parse with OWLAPI...")
-  (let [owl-ont (owl/load-ont filepath)]
+  (let [owl-ont (owl/load-ontology filepath)]
     (let [import-map (owl/get-imports owl-ont)])
     (owl/fetch-imports! dir owl-ont)
     (files/gen-content!

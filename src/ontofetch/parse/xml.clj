@@ -2,7 +2,8 @@
   (:require
    [clojure.data.xml :as data]
    [clojure.string :as s]
-   [clojure.zip :as zip]))
+   [clojure.zip :as zip]
+   [ontofetch.utils :as u]))
 
 (defn catalog-v001
   "Generates catalog-v001 from set of imports."
@@ -35,29 +36,40 @@
        second))
 
 (defn get-ontology-iri
-  "Returns the ontology IRI from an RDF/XML OWL file."
+  "Given an XML node containing ontology metadata,
+   return the ontology IRI."
   [xml]
   (get-in xml [:attrs :rdf/about]))
 
 (defn get-version-iri
-  "Returns the version IRI from an RDF/XML OWL file."
+  "Given an XML node containing ontology metadata,
+   return the version IRI (or nil)."
   [xml]
-  (loop [n 0]
-    (if (< n (count xml))
-      (let [content (nth (:content xml) n)]
-        (if (= (:tag content) :versionIRI)
-          (get-in content [:attrs :rdf/resource])
-          (recur (+ n 1)))))))
+  (first
+   (reduce
+    (fn [s c]
+      (if (= (:tag c) :versionIRI)
+        (conj s (get-in c [:attrs :rdf/resource]))
+        s))
+    [] (:content xml))))
 
 (defn get-imports
-  "Returns a list of import URLs from an RDF/XML OWL file."
+  "Given an XML node containing ontology metadata,
+   return the list of imports (or an empty list)."
   [xml]
-  (loop [n 0 imports []]
-    (if (< n (count (:content xml)))
-      (let [content (nth (:content xml) n)]
-        (if (= (:tag content) :imports)
-          (recur (+ n 1) (conj imports (get-in content [:attrs :rdf/resource])))
-          (recur (+ n 1) imports)))
-      (if-not (empty? imports)
-        imports
-        nil))))
+  (reduce
+   (fn [s c]
+     (if (= (:tag c) :imports)
+       (conj s (get-in c [:attrs :rdf/resource]))
+       s))
+   [] (:content xml)))
+
+(defn get-more-imports
+  "Given a list of direct imports and the directory they are saved in,
+   return a map of direct imports (keys) and their imports (vals)."
+  [imports dir]
+  (reduce
+   (fn [m i]
+     (let [md (get-metadata-node (u/get-path-from-purl dir i))]
+       (conj m {i (get-imports md)})))
+   {} imports))
