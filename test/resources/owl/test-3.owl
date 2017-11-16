@@ -1,0 +1,16 @@
+Prefix: : <http://test.com/resources/test-1.owl#>
+Prefix: owl: <http://www.w3.org/2002/07/owl#>
+Prefix: rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+Prefix: rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+Prefix: xml: <http://www.w3.org/XML/1998/namespace>
+Prefix: xsd: <http://www.w3.org/2001/XMLSchema#>
+
+
+
+Ontology: <http://test.com/resources/test-3.owl>
+<http://test.com/resources/2017/test-3.owl>
+
+Annotations: 
+    rdfs:comment "Test ontology for ontofetch."^^xsd:string
+
+AnnotationProperty: rdfs:comment
