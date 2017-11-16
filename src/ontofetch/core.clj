@@ -13,6 +13,19 @@
 ;; Make association between what you asked for in import and the IRI that you ended up with
 ;; Look at obi-edit file (core.owl import not resolving)
 
+(defn try-get-imports
+  "Given a list of imports and the directory they are saved in,
+   try to get their indirect imports (XML, jena, or OWLAPI)."
+  [imports dir]
+  (try
+    (xml/get-more-imports imports dir)
+    (catch Exception e
+      (try
+        (jena/get-more-imports imports dir)
+        (catch Exception e
+          (try
+            (owl/get-more-imports imports dir)))))))
+
 (defn try-xml
   "Given redirects to an ontology, a directory that it was downloaded in,
    and the ontology filepath, get metadata and generate by parsing XML.
@@ -21,10 +34,10 @@
   (println "Trying to parse RDF/XML...")
   (let [xml (xml/get-metadata-node filepath)]
     (let [imports (xml/get-imports xml)]
-      (http/fetch-direct! dir imports)
-      (let [i-map (xml/get-more-imports imports dir)]
+      (http/fetch-imports! dir imports)
+      (let [i-map (try-get-imports imports dir)]
         (for [indirs (vals i-map)]
-          ((partial http/fetch-direct! dir) indirs))
+          ((partial http/fetch-imports! dir) indirs))
         (files/gen-content!
          dir
          (u/map-request
@@ -42,16 +55,20 @@
   [redirs dir filepath]
   (println "Trying to parse with Jena...")
   (let [trps (jena/read-triples filepath)]
-    (let [import-map (http/map-imports dir (jena/get-imports trps))]
-      (files/gen-content!
-       dir
-       (u/map-request
-        filepath
-        redirs
-        [(jena/get-ontology-iri trps)
-         (jena/get-version-iri trps)
-         import-map])
-       (xml/catalog-v001 import-map)))))
+    (let [imports (jena/get-imports trps)]
+      (http/fetch-imports! dir imports)
+      (let [i-map (try-get-imports imports dir)]
+        (for [indirs (vals i-map)]
+          ((partial http/fetch-imports! dir) indirs))
+        (files/gen-content!
+         dir
+         (u/map-request
+          filepath
+          redirs
+          [(jena/get-ontology-iri trps)
+           (jena/get-version-iri trps)
+           i-map])
+         (xml/catalog-v001 i-map))))))
 
 (defn try-owl
   "Given redirects to an ontology, a directory that it was downloaded in,
@@ -59,17 +76,20 @@
   [redirs dir filepath]
   (println "Trying to parse with OWLAPI...")
   (let [owl-ont (owl/load-ontology filepath)]
-    (let [import-map (owl/get-imports owl-ont)])
-    (owl/fetch-imports! dir owl-ont)
-    (files/gen-content!
-     dir
-     (u/map-request
-      filepath
-      redirs
-      [(owl/get-ontology-iri owl-ont)
-       (owl/get-version-iri owl-ont)
-       (owl/get-imports owl-ont)])
-     (xml/catalog-v001 (owl/get-imports owl-ont)))))
+    (let [imports (owl/get-imports owl-ont)]
+      (http/fetch-imports! dir imports)
+      (let [i-map (try-get-imports imports dir)]
+        (for [indirs (vals i-map)]
+          ((partial http/fetch-imports! dir) indirs))
+        (files/gen-content!
+         dir
+         (u/map-request
+          filepath
+          redirs
+          [(owl/get-ontology-iri owl-ont)
+           (owl/get-version-iri owl-ont)
+           i-map])
+         (xml/catalog-v001 i-map))))))
 
 (defn -main
   [dir url]

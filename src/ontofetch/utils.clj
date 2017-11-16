@@ -2,6 +2,14 @@
   (:require
    [clojure.string :as s]))
 
+(defn map-metadata
+  "Given a vector containing [ontology-iri version-iri imports],
+   return a map."
+  [metadata]
+  {:ontology-iri (first metadata)
+   :version-iri (second metadata)
+   :imports (last metadata)})
+
 (defn map-request
   "Returns a map of the request details for a given ontology."
   [filepath redirs metadata]
@@ -10,9 +18,7 @@
    :request-date (.format (java.text.SimpleDateFormat. "yyyy-MM-dd HH:mm:ss") (java.util.Date.)),
    :location filepath,
    :redirect-path redirs,
-   :metadata {:ontology-iri (first metadata)
-              :version-iri (second metadata)
-              :imports (last metadata)}})
+   :metadata (map-metadata metadata)})
 
 (defn get-path-from-purl
   "Creates a filepath from a directory and a purl,

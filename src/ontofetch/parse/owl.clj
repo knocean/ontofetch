@@ -6,15 +6,15 @@
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI)))
 
-(defn load-ont
+(defn load-ontology
   "Given a filepath to an ontology,
-   return the ontology as an OWLOntology." 
+   return the ontology as an OWLOntology."
   [filepath]
   (let [manager (OWLManager/createOWLOntologyManager)]
     (.loadOntologyFromOntologyDocument manager (io/file filepath))))
 
 (defn get-ontology-iri
-  "Given an OWLOntology, return the Ontology IRI." 
+  "Given an OWLOntology, return the Ontology IRI."
   [owl-ont]
   (let [iri (.getOntologyIRI (.getOntologyID owl-ont))]
     (if (.isPresent iri)
@@ -22,7 +22,7 @@
       nil)))
 
 (defn get-version-iri
-  "Given an OWLOntology, return the Version IRI." 
+  "Given an OWLOntology, return the Version IRI."
   [owl-ont]
   (let [iri (.getVersionIRI (.getOntologyID owl-ont))]
     (if (.isPresent iri)
@@ -30,32 +30,19 @@
       nil)))
 
 (defn get-imports
-  "Given an OWLOntology, return a map of direct (key)
-   and indirect imports (vals)."  
+  "Given an OWLOntology, return a vect of direct imports."
   [owl-ont]
-  (if-not (empty? (.getDirectImportsDocuments owl-ont))
-    (loop [is (.getDirectImports owl-ont)
-           import-map {}] 
-      (let [dir (get-ontology-iri (first is))
-            indirs (mapv get-ontology-iri (.getImports (first is)))]
-        (if-not (empty? (rest is))
-          (recur (rest is) (conj import-map {dir indirs})) 
-          (conj import-map {dir indirs}))))))
+  (reduce
+    (fn [l o]
+      (conj l (.toString o)))
+    [] (.getDirectImportsDocuments owl-ont)))
 
-(defn save-owl-ont!
-  "Given an OWLOntology and a filepath, save the ontology." 
-  [owl-ont filepath]
-  (println (str "Saving: " filepath))
-  (->> filepath
-       io/file
-       io/as-url
-       IRI/create
-       (.saveOntology (.getOWLOntologyManager owl-ont) owl-ont)))
-
-(defn fetch-imports!
-  "Given a directory and an OWLOntology,
-   save all imports to the directory." 
-  [dir owl-ont]
-  (map
-    #(save-owl-ont! % (u/get-path-from-purl dir (get-ontology-iri %)))
-    (.getImports owl-ont)))  
+(defn get-more-imports
+  "Given a list of imports and a directory they are saved in,
+   return a map of imports (keys) and their imports (vals)."
+  [imports dir]
+  (reduce
+    (fn [m i]
+      (let [ont (load-ontology (u/get-path-from-purl dir i))]
+        (conj m {i (get-imports ont)})))
+    {} imports))

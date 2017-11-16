@@ -1,5 +1,7 @@
 (ns ontofetch.parse.jena
-  (:require [clojure.string :as s])
+  (:require
+    [clojure.string :as s]
+    [ontofetch.utils :as u])
   (:import
    (com.hp.hpl.jena.graph Triple Node_URI Node_Blank Node_Literal)
    (com.hp.hpl.jena.sparql.core Quad)
@@ -108,3 +110,11 @@
   (->> all-triples
        (filter #(= "http://www.w3.org/2002/07/owl#imports" (second %)))
        (mapv #(nth % 2))))
+
+(defn get-more-imports
+  [imports dir]
+  (reduce
+    (fn [m i]
+      (let [trps (read-triples (u/get-path-from-purl dir i))]
+        (conj m {i (get-imports trps)})))
+    {} imports))
