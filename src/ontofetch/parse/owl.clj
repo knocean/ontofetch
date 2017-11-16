@@ -18,24 +18,21 @@
   [owl-ont]
   (let [iri (.getOntologyIRI (.getOntologyID owl-ont))]
     (if (.isPresent iri)
-      (.toString (.get iri))
-      nil)))
+      (.toString (.get iri)))))
 
 (defn get-version-iri
   "Given an OWLOntology, return the Version IRI."
   [owl-ont]
   (let [iri (.getVersionIRI (.getOntologyID owl-ont))]
     (if (.isPresent iri)
-      (.toString (.get iri))
-      nil)))
+      (.toString (.get iri)))))
 
 (defn get-imports
-  "Given an OWLOntology, return a vect of direct imports."
+  "Given an OWLOntology, return a list of direct imports."
   [owl-ont]
-  (reduce
-    (fn [l o]
-      (conj l (.toString o)))
-    [] (.getDirectImportsDocuments owl-ont)))
+  (mapv
+    #(.toString (.getIRI %))
+    (iterator-seq (.iterator (.importsDeclarations owl-ont)))))
 
 (defn get-more-imports
   "Given a list of imports and a directory they are saved in,
