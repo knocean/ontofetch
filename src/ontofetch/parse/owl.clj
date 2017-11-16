@@ -31,15 +31,15 @@
   "Given an OWLOntology, return a list of direct imports."
   [owl-ont]
   (mapv
-    #(.toString (.getIRI %))
-    (iterator-seq (.iterator (.importsDeclarations owl-ont)))))
+   #(.toString (.getIRI %))
+   (iterator-seq (.iterator (.importsDeclarations owl-ont)))))
 
 (defn get-more-imports
   "Given a list of imports and a directory they are saved in,
    return a map of imports (keys) and their imports (vals)."
   [imports dir]
   (reduce
-    (fn [m i]
-      (let [ont (load-ontology (u/get-path-from-purl dir i))]
-        (conj m {i (get-imports ont)})))
-    {} imports))
+   (fn [m i]
+     (let [ont (load-ontology (u/get-path-from-purl dir i))]
+       (conj m {i (get-imports ont)})))
+   {} imports))

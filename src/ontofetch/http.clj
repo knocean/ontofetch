@@ -33,6 +33,8 @@
 
 (defmacro timeout [url ms & body] `(invoke-timeout ~url (fn [] ~@body) ~ms))
 
+;; TODO: Better error handling
+;;       Will return timeout if the folder isn't created
 (defn fetch-ontology!
   "Downloads an ontology from URL to a given filepath. Returns path to file."
   [filepath final-url]

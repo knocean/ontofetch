@@ -20,9 +20,9 @@
   "Checks if a directory is in proper format and that it does not exist.
    Returns true if so."
   [dir]
-  (when-not (re-matches #"[A-Za-z0-9_]+" dir)
-    (throw (Exception. "Directory name can only include letters, numbers, or
-      underscores.")))
+  (when-not (re-matches #"[A-Za-z0-9_/]+" dir)
+    (throw (Exception. (str "Directory name can only include letters, "
+                            "numbers, or underscores."))))
   (when (.isDirectory (io/file dir))
     (throw (Exception. "Directory must not already exist in the file system.")))
   true)

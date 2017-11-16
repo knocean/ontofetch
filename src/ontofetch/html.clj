@@ -14,7 +14,7 @@
   "Generates a list element for each import,
    as long as imports exists."
   [imports]
-  (if (some? imports)
+  (if-not (empty? imports)
     [:div "Imports: "
      (into [:ul]
            (for [[url indirects] imports]

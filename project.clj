@@ -13,4 +13,5 @@
   :main ^:skip-aot ontofetch.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all}}
-  :plugins [[lein-cljfmt "0.5.7"]])
+  :plugins [[lein-cljfmt "0.5.7"]
+            [lein-cloverage "1.0.10"]])

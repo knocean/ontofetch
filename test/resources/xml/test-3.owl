@@ -1,13 +1,13 @@
 <?xml version="1.0"?>
-<rdf:RDF xmlns="urn:absolute:test/resources/test-3.owl#"
-     xml:base="urn:absolute:test/resources/test-3.owl"
+<rdf:RDF xmlns="http://test.com/resources/test-3.owl#"
+     xml:base="http://test.com/resources/test-3.owl"
      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
      xmlns:owl="http://www.w3.org/2002/07/owl#"
      xmlns:xml="http://www.w3.org/XML/1998/namespace"
      xmlns:xsd="http://www.w3.org/2001/XMLSchema#"
      xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#">
-    <owl:Ontology rdf:about="http://test/resources/test-3.owl">
-        <owl:versionIRI rdf:resource="http://test/resources/2017/test-3.owl"/>
+    <owl:Ontology rdf:about="http://test.com/resources/test-3.owl">
+        <owl:versionIRI rdf:resource="http://test.com/resources/2017/test-3.owl"/>
         <rdfs:comment rdf:datatype="http://www.w3.org/2001/XMLSchema#string">Test ontology for ontofetch.</rdfs:comment>
     </owl:Ontology>
 </rdf:RDF>

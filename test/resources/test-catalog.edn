@@ -1,0 +1,22 @@
+[{:request-url "http://test.com/resources/test-1.owl",
+  :directory "test/resources",
+  :request-date "2018-01-01 00:00:00",
+  :location "test/resources/test-1.owl",
+  :redirect-path
+  ["test/resources/xml/test-1.owl"],
+  :metadata
+  {:ontology-iri "http://test.com/resources/test-1.owl",
+   :version-iri "http://test.com/resources/2017/test-1.owl",
+   :imports {"http://test.com/resources/test-2.owl"
+             ["http://test.com/resources/test-4.owl"],
+             "http://test.com/resources/test-3.owl" []}}}
+ {:request-url "http://test.com/resources/test-3.owl",
+  :directory "test/resources",
+  :request-date "2018-01-01 00:00:00",
+  :location "test/resources/test-3.owl",
+  :redirect-path
+  ["test/resources/xml/test-3.owl"],
+  :metadata
+  {:ontology-iri "http://test.com/resources/test-3.owl",
+   :version-iri "http://test.com/resources/2017/test-3.owl",
+   :imports {}}}]
