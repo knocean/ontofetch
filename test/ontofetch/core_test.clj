@@ -3,6 +3,7 @@
   (:require
    [clojure.test :refer :all]
    [ontofetch.files :as files]
+   [ontofetch.parse.parse :as p]
    [ontofetch.parse.jena :as jena]
    [ontofetch.parse.owl :as owl]
    [ontofetch.parse.xml :as xml]
@@ -57,7 +58,7 @@
     (u/map-metadata
      [(jena/get-ontology-iri trps)
       (jena/get-version-iri trps)
-      (try-get-imports
+      (p/try-get-imports
        (jena/get-imports trps)
        jena-dir)])))
 
@@ -67,7 +68,7 @@
     (u/map-metadata
      [(owl/get-ontology-iri ont)
       (owl/get-version-iri ont)
-      (try-get-imports
+      (p/try-get-imports
        (owl/get-imports ont)
        owl-dir)])))
 
@@ -77,7 +78,7 @@
     (u/map-metadata
      [(xml/get-ontology-iri xml)
       (xml/get-version-iri xml)
-      (try-get-imports
+      (p/try-get-imports
        (xml/get-imports xml)
        xml-dir)])))
 
@@ -89,7 +90,7 @@
     (u/map-metadata
      [(jena/get-ontology-iri trps)
       (jena/get-version-iri trps)
-      (jena/get-more-imports
+      (p/try-get-imports
        (jena/get-imports trps)
        jena-dir)])))
 
@@ -99,7 +100,7 @@
     (u/map-metadata
      [(owl/get-ontology-iri ont)
       (owl/get-version-iri ont)
-      (owl/get-more-imports
+      (p/try-get-imports
        (owl/get-imports ont)
        owl-dir)])))
 
@@ -109,7 +110,7 @@
     (u/map-metadata
      [(xml/get-ontology-iri xml)
       (xml/get-version-iri xml)
-      (xml/get-more-imports
+      (p/try-get-imports
        (xml/get-imports xml)
        xml-dir)])))
 
@@ -124,6 +125,29 @@
 ;; ----------------------------------------------------------
 ;;                        UNIT TESTS
 ;; ----------------------------------------------------------
+
+;; ----------------------- CLI TESTS ------------------------
+
+(def summary
+  (str
+    "  -d, --dir DIR    Directory to save downloads.\n  -p, "
+    "--purl PURL  PURL of the ontology to download.\n  -h, -"
+    "-help"))
+
+(def input ["--dir" "d" "--purl" "p"])
+
+(def valid-return
+  {:opts {:dir "d" :purl "p"}})
+
+(def help ["--help"])
+
+(def help-return
+  {:exit-msg (usage summary)
+   :ok? true})
+
+(deftest test-cli
+  (is (= valid-return (validate-args input)))
+  (is (= help-return (validate-args help))))
 
 ;; -------------------- ONTOFETCH.FILES ---------------------
 ;; Invalid directories
