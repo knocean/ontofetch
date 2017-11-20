@@ -1,7 +1,7 @@
 (ns ontofetch.parse.owl
   (:require
    [clojure.java.io :as io]
-   [ontofetch.utils :as u])
+   [ontofetch.tools.utils :as u])
   (:import
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI)))

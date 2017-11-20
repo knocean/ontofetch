@@ -1,7 +1,7 @@
 (ns ontofetch.parse.jena
   (:require
    [clojure.string :as s]
-   [ontofetch.utils :as u])
+   [ontofetch.tools.utils :as u])
   (:import
    (com.hp.hpl.jena.graph Triple Node_URI Node_Blank Node_Literal)
    (com.hp.hpl.jena.sparql.core Quad)

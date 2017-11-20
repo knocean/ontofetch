@@ -1,4 +1,4 @@
-(ns ontofetch.utils
+(ns ontofetch.tools.utils
   (:require
    [clojure.string :as s]))
 

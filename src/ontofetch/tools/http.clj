@@ -1,6 +1,6 @@
-(ns ontofetch.http
+(ns ontofetch.tools.http
   (:require
-   [ontofetch.utils :as u]
+   [ontofetch.tools.utils :as u]
    [ontofetch.parse.xml :as xml]
    [org.httpkit.client :as http]))
 

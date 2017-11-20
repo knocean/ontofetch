@@ -2,14 +2,14 @@
   (:use [ontofetch.core])
   (:require
    [clojure.test :refer :all]
-   [ontofetch.files :as files]
-   [ontofetch.parse.parse :as p]
+   [ontofetch.ontofetch :refer :all]
    [ontofetch.parse.jena :as jena]
    [ontofetch.parse.owl :as owl]
    [ontofetch.parse.xml :as xml]
-   [ontofetch.html :as html]
-   [ontofetch.http :as http]
-   [ontofetch.utils :as u]
+   [ontofetch.tools.files :as files]
+   [ontofetch.tools.html :as html]
+   [ontofetch.tools.http :as http]
+   [ontofetch.tools.utils :as u]
    [clojure.java.io :as io]))
 
 (def dir "test/resources")
@@ -58,7 +58,7 @@
     (u/map-metadata
      [(jena/get-ontology-iri trps)
       (jena/get-version-iri trps)
-      (p/try-get-imports
+      (try-get-imports
        (jena/get-imports trps)
        jena-dir)])))
 
@@ -68,7 +68,7 @@
     (u/map-metadata
      [(owl/get-ontology-iri ont)
       (owl/get-version-iri ont)
-      (p/try-get-imports
+      (try-get-imports
        (owl/get-imports ont)
        owl-dir)])))
 
@@ -78,7 +78,7 @@
     (u/map-metadata
      [(xml/get-ontology-iri xml)
       (xml/get-version-iri xml)
-      (p/try-get-imports
+      (try-get-imports
        (xml/get-imports xml)
        xml-dir)])))
 
@@ -90,7 +90,7 @@
     (u/map-metadata
      [(jena/get-ontology-iri trps)
       (jena/get-version-iri trps)
-      (p/try-get-imports
+      (try-get-imports
        (jena/get-imports trps)
        jena-dir)])))
 
@@ -100,7 +100,7 @@
     (u/map-metadata
      [(owl/get-ontology-iri ont)
       (owl/get-version-iri ont)
-      (p/try-get-imports
+      (try-get-imports
        (owl/get-imports ont)
        owl-dir)])))
 
@@ -110,7 +110,7 @@
     (u/map-metadata
      [(xml/get-ontology-iri xml)
       (xml/get-version-iri xml)
-      (p/try-get-imports
+      (try-get-imports
        (xml/get-imports xml)
        xml-dir)])))
 
@@ -130,9 +130,9 @@
 
 (def summary
   (str
-    "  -d, --dir DIR    Directory to save downloads.\n  -p, "
-    "--purl PURL  PURL of the ontology to download.\n  -h, -"
-    "-help"))
+   "  -d, --dir DIR    Directory to save downloads.\n  -p, "
+   "--purl PURL  PURL of the ontology to download.\n  -h, -"
+   "-help"))
 
 (def input ["--dir" "d" "--purl" "p"])
 

@@ -1,11 +1,12 @@
 (ns ontofetch.core
+  (:use
+   [ontofetch.ontofetch])
   (:require
    [clojure.string :as s]
    [clojure.tools.cli :refer [parse-opts]]
-   [ontofetch.files :as files]
-   [ontofetch.http :as http]
-   [ontofetch.parse.parse :as p]
-   [ontofetch.utils :as u])
+   [ontofetch.tools.files :as f]
+   [ontofetch.tools.http :as h]
+   [ontofetch.tools.utils :as u])
   (:gen-class))
 
 ;; TODO: General error handling (error logs)
@@ -25,7 +26,7 @@
 (defn usage
   [options-summary]
   (->> [""
-        "ontofetch gets an ontology and it's imports, summarizes" 
+        "ontofetch gets an ontology and it's imports, summarizes"
         "the metadata, and returns a .zip of all downloads."
         ""
         "Usage: ontofetch [options]"
@@ -57,7 +58,7 @@
   "Given a status (0 or 1) and an (optional) exit message,
    return the message and exit ontofetch."
   ([status]
-   (exit status nil)) 
+   (exit status nil))
   ([status msg]
    (if msg
      (println msg))
@@ -68,12 +69,12 @@
   (let [{:keys [action opts exit-msg ok?]} (validate-args args)]
     (if exit-msg
       (exit
-        (if ok? 0 1)
-        exit-msg)
+       (if ok? 0 1)
+       exit-msg)
       (let [{:keys [dir purl]} opts]
-        (let [redirs (http/get-redirects purl)
-              fp (u/get-path-from-purl (files/make-dir! dir) purl)]
-          (http/fetch-ontology! fp (last redirs))
-          (if (true? (p/parse-ontology redirs dir fp))
+        (let [redirs (h/get-redirects purl)
+              fp (u/get-path-from-purl (f/make-dir! dir) purl)]
+          (h/fetch-ontology! fp (last redirs))
+          (if (true? (parse-ontology redirs dir fp))
             (exit 0)
             (exit 1 (str "Unable to fetch " purl))))))))

@@ -1,11 +1,10 @@
-(ns ontofetch.files
+(ns ontofetch.tools.files
   (:require
    [clojure.edn :as edn]
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
-   [clojure.string :as s]
    [clojure.tools.file-utils :as ctfu]
-   [ontofetch.html :as html])
+   [ontofetch.tools.html :as h])
   (:import
    [java.util.zip ZipEntry ZipOutputStream]))
 
@@ -15,6 +14,7 @@
               (if (.exists (io/as-file +catalog+))
                 (edn/read-string (slurp +catalog+))
                 [])))
+(def ont-elements "resources/elements/")
 
 (defn valid-dir?
   "Checks if a directory is in proper format and that it does not exist.
@@ -38,7 +38,7 @@
 (defn spit-report!
   "Generates the HTML report in cuurent directory."
   []
-  (spit +report+ (html/gen-html @catalog)))
+  (spit +report+ (h/gen-html @catalog)))
 
 (defn update-catalog!
   "Adds the request details to the catalog,

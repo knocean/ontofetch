@@ -2,8 +2,9 @@
   (:require
    [clojure.data.xml :as data]
    [clojure.string :as s]
+   [clojure.xml :refer [emit-element]]
    [clojure.zip :as zip]
-   [ontofetch.utils :as u]))
+   [ontofetch.tools.utils :as u]))
 
 (defn catalog-v001
   "Generates catalog-v001 from set of imports."
@@ -73,3 +74,8 @@
      (let [md (get-metadata-node (u/get-path-from-purl dir i))]
        (conj m {i (get-imports md)})))
    {} imports))
+
+;; TODO: Store as edn instead
+(defn get-ont-element
+  [xml]
+  (with-out-str (emit-element xml)))

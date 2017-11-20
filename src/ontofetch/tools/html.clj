@@ -1,4 +1,4 @@
-(ns ontofetch.html
+(ns ontofetch.tools.html
   (:require
    [hiccup.core :as hic]))
 
