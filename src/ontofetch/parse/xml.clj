@@ -2,7 +2,7 @@
   (:require
    [clojure.data.xml :as data]
    [clojure.string :as s]
-   [clojure.xml :refer [emit-element]]
+   [clojure.xml :as x]
    [clojure.zip :as zip]
    [ontofetch.tools.utils :as u]))
 
@@ -23,16 +23,21 @@
           [:uri {:name uri :uri (last (s/split uri #"/"))}])
         imports)]))))
 
-(defn get-metadata-node
-  "Returns the XML node containing the ontology metadata."
+(defn parse-xml
+  "Given a filepath to an ontology,
+   return parsed XML."
   [filepath]
-  (->> filepath
-       java.io.FileInputStream.
-       data/parse
+  (x/parse (java.io.FileInputStream. filepath)))
+
+(defn get-metadata-node
+  "Given parsed XML from an owl:Ontology,
+   return the Ontology metadata."
+  [xml]
+  (->> xml
        zip/xml-zip
        zip/children
        (map (fn [xml-node] [(:tag xml-node) xml-node]))
-       (filter #(= :Ontology (first %)))
+       (filter #(= :owl:Ontology (first %)))
        first
        second))
 
@@ -40,7 +45,7 @@
   "Given an XML node containing ontology metadata,
    return the ontology IRI."
   [xml]
-  (get-in xml [:attrs :rdf/about]))
+  (get-in xml [:attrs :rdf:about]))
 
 (defn get-version-iri
   "Given an XML node containing ontology metadata,
@@ -49,8 +54,8 @@
   (first
    (reduce
     (fn [s c]
-      (if (= (:tag c) :versionIRI)
-        (conj s (get-in c [:attrs :rdf/resource]))
+      (if (= (:tag c) :owl:versionIRI)
+        (conj s (get-in c [:attrs :rdf:resource]))
         s))
     [] (:content xml))))
 
@@ -60,8 +65,8 @@
   [xml]
   (reduce
    (fn [s c]
-     (if (= (:tag c) :imports)
-       (conj s (get-in c [:attrs :rdf/resource]))
+     (if (= (:tag c) :owl:imports)
+       (conj s (get-in c [:attrs :rdf:resource]))
        s))
    [] (:content xml)))
 
@@ -75,7 +80,19 @@
        (conj m {i (get-imports md)})))
    {} imports))
 
-;; TODO: Store as edn instead
-(defn get-ont-element
+(defn get-declarations
+  "Given parsed XML of an owl:Ontology,
+   return the XML declarations (as XML)."
   [xml]
-  (with-out-str (emit-element xml)))
+  (let [decs (:attrs xml)]
+    (->> {:attrs decs}
+         (conj {:tag :rdf:RDF}))))
+
+(defn get-ont-element
+  "Given RDF declarations as XML and a map of the metadata,
+   return the Ontology element as XML string."
+  [decs metadata]
+  (->> {:content (vector metadata)}
+       (into decs)
+       x/emit-element
+       with-out-str))

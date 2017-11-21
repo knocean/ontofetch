@@ -28,28 +28,31 @@
    And more..."
   [redirs dir filepath]
   ;; Get the metadata node as XML element
-  (let [xml (xml/get-metadata-node filepath)]
-    ;; Get a list of the imports
-    (let [imports (xml/get-imports xml)]
-      ;; Download the direct imports
-      (h/fetch-imports! dir imports)
-      ;; Get a map of direct imports (key) & indirect imports (vals)
-      (let [i-map (try-get-imports imports dir)]
-        ;; Download the indirect imports
-        (for [indirs (vals i-map)]
-          ((partial h/fetch-imports! dir) indirs))
-        ;; Generate content
-        (f/gen-content!
-         dir
-         ;; Formatted metadata map
-         (u/map-request
-          filepath
-          redirs
-          [(xml/get-ontology-iri xml)
-           (xml/get-version-iri xml)
-           i-map])
-         ;; Catalog for protege
-         (xml/catalog-v001 i-map))))))
+  (let [xml (xml/parse-xml filepath)
+        decs (xml/get-declarations xml)
+        md (xml/get-metadata-node xml)
+        imports (xml/get-imports md)]
+    ;; Create an XML file with just the Ontology element
+    (f/spit-ont-element! dir (xml/get-ont-element decs md))
+    ;; Download the direct imports
+    (h/fetch-imports! dir imports)
+    ;; Get a map of direct imports (key) & indirect imports (vals)
+    (let [i-map (try-get-imports imports dir)]
+      ;; Download the indirect imports
+      (for [indirs (vals i-map)]
+        ((partial h/fetch-imports! dir) indirs))
+      ;; Generate content
+      (f/gen-content!
+       dir
+       ;; Formatted metadata map
+       (u/map-request
+        filepath
+        redirs
+        [(xml/get-ontology-iri md)
+         (xml/get-version-iri md)
+         i-map])
+       ;; Catalog for protege
+       (xml/catalog-v001 i-map)))))
 
 (defn try-jena
   "Given redirects to an ontology, a directory that it was downloaded in,

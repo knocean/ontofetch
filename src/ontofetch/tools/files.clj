@@ -4,6 +4,7 @@
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
    [clojure.tools.file-utils :as ctfu]
+   [ontofetch.parse.xml :as xml]
    [ontofetch.tools.html :as h])
   (:import
    [java.util.zip ZipEntry ZipOutputStream]))
@@ -69,3 +70,8 @@
   (spit-catalog-v001! dir catalog-v001)
   (spit-report!)
   (zip-folder! dir))
+
+(defn spit-ont-element!
+  [dir ont-element]
+  (spit (str dir "/" dir "-element.owl") ont-element))
+  

@@ -74,7 +74,7 @@
 
 (def test-xml (str xml-dir file))
 (def md-1-from-xml
-  (let [xml (xml/get-metadata-node test-xml)]
+  (let [xml (xml/get-metadata-node (xml/parse-xml test-xml))]
     (u/map-metadata
      [(xml/get-ontology-iri xml)
       (xml/get-version-iri xml)
@@ -106,7 +106,7 @@
 
 (def test-xml (str xml-dir file-2))
 (def md-2-from-xml
-  (let [xml (xml/get-metadata-node test-xml)]
+  (let [xml (xml/get-metadata-node (xml/parse-xml test-xml))]
     (u/map-metadata
      [(xml/get-ontology-iri xml)
       (xml/get-version-iri xml)
