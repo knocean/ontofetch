@@ -23,17 +23,18 @@
             (owl/get-more-imports imports dir)))))))
 
 (defn try-xml
-  "Given redirects to an ontology, a directory that it was downloaded in,
-   and the ontology filepath, get metadata and generate by parsing XML.
-   And more..."
+  "Given redirects to an ontology, a directory that it was downloaded
+   in, and the ontology filepath, get metadata and generate by parsing
+   XML. And more..."
   [redirs dir filepath]
-  ;; Get the metadata node as XML element
+  ;; Parse XML, then get the RDF node, the metadata node,
+  ;; and a list of imports
   (let [xml (xml/parse-xml filepath)
-        decs (xml/get-declarations xml)
+        rdf (xml/get-rdf-node xml)
         md (xml/get-metadata-node xml)
         imports (xml/get-imports md)]
     ;; Create an XML file with just the Ontology element
-    (f/spit-ont-element! dir (xml/get-ont-element decs md))
+    (f/spit-ont-element! dir (xml/node->xml-str rdf md))
     ;; Download the direct imports
     (h/fetch-imports! dir imports)
     ;; Get a map of direct imports (key) & indirect imports (vals)
@@ -55,12 +56,19 @@
        (xml/catalog-v001 i-map)))))
 
 (defn try-jena
-  "Given redirects to an ontology, a directory that it was downloaded in,
-   and the ontology filepath, read the triples to get the metadata.
-   And more..."
+  "Given redirects to an ontology, a directory that it was downloaded
+   in, and the ontology filepath, read the triples to get the
+   metadata. And more..."
   [redirs dir filepath]
-  ;; Get the triples
-  (let [trps (jena/read-triples filepath)]
+  ;; Get the triples and prefixes
+  (let [ttl (jena/read-triples filepath)
+        trps (second ttl)]
+    ;; Generate the ontology element as XML
+    (f/spit-ont-element!
+      dir
+      (xml/node->xml-str
+        (jena/map-rdf-node (first ttl))
+        (jena/map-metadata-node (first redirs) ttl)))
     ;; Get a list of the imports
     (let [imports (jena/get-imports trps)]
       ;; Download the direct imports
@@ -83,8 +91,9 @@
          (xml/catalog-v001 i-map))))))
 
 (defn try-owl
-  "Given redirects to an ontology, a directory that it was downloaded in,
-   and the ontology filepath, use OWLAPI to parse the ontology. And more..."
+  "Given redirects to an ontology, a directory that it was downloaded
+   in, and the ontology filepath, use OWLAPI to parse the ontology.
+   And more..."
   [redirs dir filepath]
   ;; Get the ontology as an OWLOntology
   (let [owl-ont (owl/load-ontology filepath)]

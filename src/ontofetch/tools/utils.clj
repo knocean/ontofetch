@@ -25,3 +25,9 @@
    giving the file the same name as the purl."
   [dir url]
   (str dir "/" (last (s/split url #"/"))))
+
+(defn conj*
+  "Given a seq and an element to append, return a conj'd vector with
+   the new element at the end."
+  [s x]
+  (conj (vec s) x))

@@ -6,28 +6,21 @@
    [clojure.zip :as zip]
    [ontofetch.tools.utils :as u]))
 
-(defn catalog-v001
-  "Generates catalog-v001 from set of imports."
-  [i-map]
-  (let [imports (->> (vals i-map)
-                     (into (keys i-map))
-                     flatten
-                     (into #{})
-                     (filter identity))]
-    (data/indent-str
-     (data/sexp-as-element
-      [:catalog {:xmlns "urn:oasis:names:tc:entity:xmlns:xml:catalog"
-                 :prefer "public"}
-       (map
-        (fn [uri]
-          [:uri {:name uri :uri (last (s/split uri #"/"))}])
-        imports)]))))
-
 (defn parse-xml
   "Given a filepath to an ontology,
    return parsed XML."
   [filepath]
   (x/parse (java.io.FileInputStream. filepath)))
+
+;;------------------------------ NODES -------------------------------
+;; Methods to get specific nodes from parsed XML
+
+(defn get-rdf-node
+  "Given parsed XML of an owl:Ontology,
+   return the mapped RDF node."
+  [xml]
+  {:tag :rdf:RDF,
+   :attrs (:attrs xml)})
 
 (defn get-metadata-node
   "Given parsed XML from an owl:Ontology,
@@ -40,6 +33,9 @@
        (filter #(= :owl:Ontology (first %)))
        first
        second))
+
+;;---------------------------- METADATA ------------------------------
+;; Methods to get specific metadata elements from the metadata node
 
 (defn get-ontology-iri
   "Given an XML node containing ontology metadata,
@@ -80,19 +76,31 @@
        (conj m {i (get-imports md)})))
    {} imports))
 
-(defn get-declarations
-  "Given parsed XML of an owl:Ontology,
-   return the XML declarations (as XML)."
-  [xml]
-  (let [decs (:attrs xml)]
-    (->> {:attrs decs}
-         (conj {:tag :rdf:RDF}))))
+;;--------------------------- XML STRING -----------------------------
+;; Methods to convert maps of XML nodes to XML strings
 
-(defn get-ont-element
-  "Given RDF declarations as XML and a map of the metadata,
+(defn node->xml-str
+  "Given a mapped RDF node and a map of the metadata,
    return the Ontology element as XML string."
-  [decs metadata]
+  [rdf-node metadata]
   (->> {:content (vector metadata)}
-       (into decs)
+       (into rdf-node)
        x/emit-element
        with-out-str))
+
+(defn catalog-v001
+  "Generates catalog-v001 from set of imports."
+  [i-map]
+  (let [imports (->> (vals i-map)
+                     (into (keys i-map))
+                     flatten
+                     (into #{})
+                     (filter identity))]
+    (data/indent-str
+     (data/sexp-as-element
+      [:catalog {:xmlns "urn:oasis:names:tc:entity:xmlns:xml:catalog"
+                 :prefer "public"}
+       (map
+        (fn [uri]
+          [:uri {:name uri :uri (last (s/split uri #"/"))}])
+        imports)]))))
