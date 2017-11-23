@@ -42,4 +42,4 @@
   (let [xmlns (:xmlns m)
         base (:xml:base m)
         r (dissoc m :xmlns :xml:base)]
-    (conj {:xmlns xmlns, :xml:base base} r)))  
+    (conj {:xmlns xmlns, :xml:base base} r)))

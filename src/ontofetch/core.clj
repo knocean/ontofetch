@@ -15,19 +15,23 @@
 ;; Look at obi-edit file (core.owl import not resolving)
 
 (def cli-options
-  [["-d" "--dir DIR" "Directory"
+  [["-d" "--dir  DIR" "Directory"
     :desc "Directory to save downloads."
     :parse-fn #(String. %)]
    ["-p" "--purl PURL" "PURL"
     :desc "PURL of the ontology to download."
     :parse-fn #(String. %)]
+   ["-z" "--zip" "Zip Results"
+    :desc "Compress the results."
+    :default false]
    ["-h" "--help"]])
 
 (defn usage
   [options-summary]
   (->> [""
-        "ontofetch gets an ontology and it's imports, summarizes"
-        "the metadata, and returns a .zip of all downloads."
+        "ontofetch gets an ontology and it's imports, summarizes the "
+        "metadata, and returns a directory (or compressed folder) of "
+        "all downloads."
         ""
         "Usage: ontofetch [options]"
         ""
@@ -67,14 +71,23 @@
 (defn -main
   [& args]
   (let [{:keys [action opts exit-msg ok?]} (validate-args args)]
+    ;; If validate returned msg, return msg to user
     (if exit-msg
       (exit
+       ;; Should be OK if --help, otherwise error
        (if ok? 0 1)
        exit-msg)
-      (let [{:keys [dir purl]} opts]
+      ;; No exit msg, get parsed options
+      (let [{:keys [dir purl zip]} opts]
         (let [redirs (h/get-redirects purl)
-              fp (u/get-path-from-purl (f/make-dir! dir) purl)]
-          (h/fetch-ontology! fp (last redirs))
-          (if (true? (parse-ontology redirs dir fp))
-            (exit 0)
+              filepath (u/get-path-from-purl (f/make-dir! dir) purl)]
+          ;; Download the ontology to created dir
+          (h/fetch-ontology! filepath (last redirs))
+          ;; Do all the stuff - successful if it returns true
+          (if (true? (parse-ontology redirs dir filepath))
+            (do
+              ;; Zip directory if user provided flag
+              (if zip
+                (f/zip-folder! dir))
+              (exit 0))
             (exit 1 (str "Unable to fetch " purl))))))))

@@ -132,14 +132,14 @@
 
 (def summary
   (str
-   "  -d, --dir DIR    Directory to save downloads.\n  -p, "
-   "--purl PURL  PURL of the ontology to download.\n  -h, -"
-   "-help"))
+   "  -d, --dir  DIR   Directory to save downloads.\n  -p, --purl PUR"
+   "L  PURL of the ontology to download.\n  -z, --zip        Compress"
+   " the results.\n  -h, --help"))
 
-(def input ["--dir" "d" "--purl" "p"])
+(def input ["--dir" "d" "--purl" "p" "--zip"])
 
 (def valid-return
-  {:opts {:dir "d" :purl "p"}})
+  {:opts {:dir "d" :purl "p" :zip true}})
 
 (def help ["--help"])
 
@@ -260,13 +260,13 @@
 (def test-rdf-node-ttl
   (let [ttl (jena/read-triples (str jena-dir file-ttl))]
     (clojure.string/replace
-      (xml/node->xml-str
-        (jena/map-rdf-node ttl)
-        (jena/map-metadata
-          "http://test.com/resources/test-1.owl"
-          ttl))
+     (xml/node->xml-str
+      (jena/map-rdf-node ttl)
+      (jena/map-metadata
+       "http://test.com/resources/test-1.owl"
+       ttl))
       ;; Remove newline chars
-      #"\n" "")))
+     #"\n" "")))
 
 ;; -------------------------- ONTOFETCH.XML --------------------------
 
@@ -286,42 +286,42 @@
 
 (def rdf-node-xml
   (str
-    "<rdf:RDF xmlns='http://test.com/resources/test-1.owl#' xml:base="
-    "'http://test.com/resources/test-1.owl' xmlns:rdfs='http://www.w3"
-    ".org/2000/01/rdf-schema#' xmlns:xsd='http://www.w3.org/2001/XMLS"
-    "chema#' xmlns:xml='http://www.w3.org/XML/1998/namespace' xmlns:o"
-    "wl='http://www.w3.org/2002/07/owl#' xmlns:rdf='http://www.w3.org"
-    "/1999/02/22-rdf-syntax-ns#'><owl:Ontology rdf:about='http://test"
-    ".com/resources/test-1.owl'><owl:versionIRI rdf:resource='http://"
-    "test.com/resources/2017/test-1.owl'/><owl:imports rdf:resource='"
-    "http://test.com/resources/test-3.owl'/><owl:imports rdf:resource"
-    "='http://test.com/resources/test-2.owl'/><rdfs:comment rdf:datat"
-    "ype='http://www.w3.org/2001/XMLSchema#string'>Test ontology for "
-    "ontofetch.</rdfs:comment></owl:Ontology></rdf:RDF>"))
+   "<rdf:RDF xmlns='http://test.com/resources/test-1.owl#' xml:base="
+   "'http://test.com/resources/test-1.owl' xmlns:rdfs='http://www.w3"
+   ".org/2000/01/rdf-schema#' xmlns:xsd='http://www.w3.org/2001/XMLS"
+   "chema#' xmlns:xml='http://www.w3.org/XML/1998/namespace' xmlns:o"
+   "wl='http://www.w3.org/2002/07/owl#' xmlns:rdf='http://www.w3.org"
+   "/1999/02/22-rdf-syntax-ns#'><owl:Ontology rdf:about='http://test"
+   ".com/resources/test-1.owl'><owl:versionIRI rdf:resource='http://"
+   "test.com/resources/2017/test-1.owl'/><owl:imports rdf:resource='"
+   "http://test.com/resources/test-3.owl'/><owl:imports rdf:resource"
+   "='http://test.com/resources/test-2.owl'/><rdfs:comment rdf:datat"
+   "ype='http://www.w3.org/2001/XMLSchema#string'>Test ontology for "
+   "ontofetch.</rdfs:comment></owl:Ontology></rdf:RDF>"))
 
 (def rdf-node-ttl
   (str
-    "<rdf:RDF xmlns='http://test.com/resources/test-1.ttl#' xml:base="
-    "'http://test.com/resources/test-1.ttl' xmlns:rdf='http://www.w3."
-    "org/1999/02/22-rdf-syntax-ns#' xmlns:owl='http://www.w3.org/2002"
-    "/07/owl#' xmlns:xml='http://www.w3.org/XML/1998/namespace' xmlns"
-    ":xsd='http://www.w3.org/2001/XMLSchema#' xmlns:rdfs='http://www."
-    "w3.org/2000/01/rdf-schema#'><owl:Ontology rdf:about='http://test"
-    ".com/resources/test-1.owl'><owl:versionIRI rdf:resource='http://"
-    "test.com/resources/2017/test-1.ttl'/><owl:imports rdf:resource='"
-    "http://test.com/resources/test-3.ttl'/><owl:imports rdf:resource"
-    "='http://test.com/resources/test-2.ttl'/><rdfs:comment rdf:datat"
-    "ype='http://www.w3.org/2001/XMLSchema#string'>Test ontology for "
-    "ontofetch.</rdfs:comment></owl:Ontology></rdf:RDF>"))
+   "<rdf:RDF xmlns='http://test.com/resources/test-1.ttl#' xml:base="
+   "'http://test.com/resources/test-1.ttl' xmlns:rdf='http://www.w3."
+   "org/1999/02/22-rdf-syntax-ns#' xmlns:owl='http://www.w3.org/2002"
+   "/07/owl#' xmlns:xml='http://www.w3.org/XML/1998/namespace' xmlns"
+   ":xsd='http://www.w3.org/2001/XMLSchema#' xmlns:rdfs='http://www."
+   "w3.org/2000/01/rdf-schema#'><owl:Ontology rdf:about='http://test"
+   ".com/resources/test-1.owl'><owl:versionIRI rdf:resource='http://"
+   "test.com/resources/2017/test-1.ttl'/><owl:imports rdf:resource='"
+   "http://test.com/resources/test-3.ttl'/><owl:imports rdf:resource"
+   "='http://test.com/resources/test-2.ttl'/><rdfs:comment rdf:datat"
+   "ype='http://www.w3.org/2001/XMLSchema#string'>Test ontology for "
+   "ontofetch.</rdfs:comment></owl:Ontology></rdf:RDF>"))
 
 (def test-rdf-node-xml
   (let [xml (xml/parse-xml (str xml-dir file))]
     (clojure.string/replace
-      (xml/node->xml-str
-        (xml/get-rdf-node xml)
-        (xml/get-metadata-node xml))
+     (xml/node->xml-str
+      (xml/get-rdf-node xml)
+      (xml/get-metadata-node xml))
       ;; Remove newline chars
-      #"\n" "")))
+     #"\n" "")))
 
 (deftest test-xml
   (is (= catalog-v001 (xml/catalog-v001 i-map)))
