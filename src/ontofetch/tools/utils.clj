@@ -15,7 +15,10 @@
   [filepath redirs metadata]
   {:request-url (first redirs),
    :directory (first (s/split filepath #"/")),
-   :request-date (.format (java.text.SimpleDateFormat. "yyyy-MM-dd HH:mm:ss") (java.util.Date.)),
+   :request-date
+   (.format
+    (java.text.SimpleDateFormat. "yyyy-MM-dd HH:mm:ss")
+    (java.util.Date.)),
    :location filepath,
    :redirect-path redirs,
    :metadata (map-metadata metadata)})
@@ -31,3 +34,12 @@
    the new element at the end."
   [s x]
   (conj (vec s) x))
+
+(defn sort-prefixes
+  "Given a map of prefixes, return a map that has the
+   xmlns first, followed by the base, then the rest."
+  [m]
+  (let [xmlns (:xmlns m)
+        base (:xml:base m)
+        r (dissoc m :xmlns :xml:base)]
+    (conj {:xmlns xmlns, :xml:base base} r)))  

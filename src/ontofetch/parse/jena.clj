@@ -141,31 +141,12 @@
   [imports dir]
   (reduce
    (fn [m i]
-     (let [trps (read-triples (u/get-path-from-purl dir i))]
+     (let [trps (second (read-triples (u/get-path-from-purl dir i)))]
        (conj m {i (get-imports trps)})))
    {} imports))
 
 ;;----------------------------- FORMAT -------------------------------
 ;; Methods to format parsed triples as maps to convert to XML
-
-(defn map-prefixes
-  "Given a map to build into, a key (prefix), and value (full URI),
-   associate the XML/XMLNS prefix with the URI."
-  [m k v]
-  (if (= k :base)
-    (assoc m :xml:base v)
-    (if (nil? k)
-      (assoc m :xmlns v)
-      (assoc m (keyword (str "xmlns:" (name k))) v))))
-
-(defn map-rdf-node
-  "Given a map of prefixes,
-   return a map of the RDF node that can be parsed into XML."
-  [prefs]
-  (->> prefs
-       (reduce-kv map-prefixes {})
-       (assoc {} :attrs)
-       (conj {:tag :rdf:RDF})))
 
 (defn ns->prefix
   "Given a full URI, a key to split (# or /), and a map of namespaces
@@ -185,7 +166,7 @@
         md (filter
             #(= "http://test.com/resources/test-1.ttl"
                 (first %))
-            (second all-triples))]
+            (second ttl))]
     (reduce 
       (fn [v md]
           (let [[_ p o] md]
@@ -238,3 +219,24 @@
     {:tag :owl:Ontology,
      :attrs {:rdf:about iri},
      :content (reduce map-annotation [] annotations)}))
+
+(defn map-prefix
+  "Given a map to build into, a key (prefix), and value (full URI),
+   associate the XML/XMLNS prefix with the URI."
+  [m k v]
+  (if (= k :base)
+    (assoc m :xml:base v)
+    (if (nil? k)
+      (assoc m :xmlns v)
+      (assoc m (keyword (str "xmlns:" (name k))) v))))
+
+(defn map-rdf-node
+  "Given the parsed ttl as [prefixes triples],
+   return a map of the RDF node that can be parsed into XML."
+  [ttl]
+  (->> ttl
+       first
+       (reduce-kv map-prefix {})
+       u/sort-prefixes
+       (assoc {} :attrs)
+       (conj {:tag :rdf:RDF})))

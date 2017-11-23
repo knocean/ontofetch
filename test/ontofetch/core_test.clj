@@ -22,9 +22,9 @@
 (def file-2 "/test-3.owl")
 (def file-ttl-2 "/test-3.ttl")
 
-;; ----------------------------------------------------------
-;;                     INTEGRATION TEST
-;; ----------------------------------------------------------
+;; -------------------------------------------------------------------
+;;                         INTEGRATION TEST
+;; -------------------------------------------------------------------
 
 ;; Expected output
 
@@ -36,7 +36,8 @@
             "http://test.com/resources/test-3.owl" []}})
 
 (def md-ttl-1 {:ontology-iri "http://test.com/resources/test-1.ttl",
-               :version-iri "http://test.com/resources/2017/test-1.ttl",
+               :version-iri
+               "http://test.com/resources/2017/test-1.ttl",
                :imports
                {"http://test.com/resources/test-2.ttl"
                 ["http://test.com/resources/test-4.ttl"],
@@ -47,14 +48,15 @@
            :imports {}})
 
 (def md-ttl-2 {:ontology-iri "http://test.com/resources/test-3.ttl",
-               :version-iri "http://test.com/resources/2017/test-3.ttl",
+               :version-iri
+               "http://test.com/resources/2017/test-3.ttl",
                :imports {}})
 
 ;; Test with direct & indirect imports
 
 (def test-jena (str jena-dir file-ttl))
 (def md-1-from-jena
-  (let [trps (jena/read-triples test-jena)]
+  (let [trps (second (jena/read-triples test-jena))]
     (u/map-metadata
      [(jena/get-ontology-iri trps)
       (jena/get-version-iri trps)
@@ -86,7 +88,7 @@
 
 (def test-jena (str jena-dir file-ttl-2))
 (def md-2-from-jena
-  (let [trps (jena/read-triples test-jena)]
+  (let [trps (second (jena/read-triples test-jena))]
     (u/map-metadata
      [(jena/get-ontology-iri trps)
       (jena/get-version-iri trps)
@@ -122,11 +124,11 @@
   (is (= md-2 md-2-from-owl))
   (is (= md-2 md-2-from-xml)))
 
-;; ----------------------------------------------------------
-;;                        UNIT TESTS
-;; ----------------------------------------------------------
+;; -------------------------------------------------------------------
+;;                             UNIT TESTS
+;; -------------------------------------------------------------------
 
-;; ----------------------- CLI TESTS ------------------------
+;; ---------------------------- CLI TESTS ----------------------------
 
 (def summary
   (str
@@ -149,7 +151,7 @@
   (is (= valid-return (validate-args input)))
   (is (= help-return (validate-args help))))
 
-;; -------------------- ONTOFETCH.FILES ---------------------
+;; ------------------------ ONTOFETCH.FILES --------------------------
 ;; Invalid directories
 (def dir-1 "dir-1")
 (def dir-2 "test")
@@ -179,7 +181,7 @@
   (is (= true test-mkdir))
   (is (= true test-zip)))
 
-;; --------------------- ONTOFETCH.HTML ---------------------
+;; ------------------------- ONTOFETCH.HTML --------------------------
 ;; Expected HTML output
 (def html
   (str
@@ -215,7 +217,7 @@
 (deftest test-html
   (is (= html (html/gen-html catalog))))
 
-;; --------------------- ONTOFETCH.HTTP ---------------------
+;; ------------------------- ONTOFETCH.HTTP --------------------------
 
 (def bfo (str dir "/bfo.owl"))
 
@@ -252,7 +254,21 @@
   (is (= true fetch-bfo))
   (is (= true fetch-import)))
 
-;; -------------------- ONTOFETCH.XML ----------------------
+;; ------------------------- ONTOFETCH.JENA --------------------------
+
+;; Prepare for use in XML test
+(def test-rdf-node-ttl
+  (let [ttl (jena/read-triples (str jena-dir file-ttl))]
+    (clojure.string/replace
+      (xml/node->xml-str
+        (jena/map-rdf-node ttl)
+        (jena/map-metadata
+          "http://test.com/resources/test-1.owl"
+          ttl))
+      ;; Remove newline chars
+      #"\n" "")))
+
+;; -------------------------- ONTOFETCH.XML --------------------------
 
 (def catalog-v001
   (str
@@ -268,5 +284,46 @@
             ["http://test.com/resources/test-4.owl"],
             "http://test.com/resources/test-3.owl" []})
 
+(def rdf-node-xml
+  (str
+    "<rdf:RDF xmlns='http://test.com/resources/test-1.owl#' xml:base="
+    "'http://test.com/resources/test-1.owl' xmlns:rdfs='http://www.w3"
+    ".org/2000/01/rdf-schema#' xmlns:xsd='http://www.w3.org/2001/XMLS"
+    "chema#' xmlns:xml='http://www.w3.org/XML/1998/namespace' xmlns:o"
+    "wl='http://www.w3.org/2002/07/owl#' xmlns:rdf='http://www.w3.org"
+    "/1999/02/22-rdf-syntax-ns#'><owl:Ontology rdf:about='http://test"
+    ".com/resources/test-1.owl'><owl:versionIRI rdf:resource='http://"
+    "test.com/resources/2017/test-1.owl'/><owl:imports rdf:resource='"
+    "http://test.com/resources/test-3.owl'/><owl:imports rdf:resource"
+    "='http://test.com/resources/test-2.owl'/><rdfs:comment rdf:datat"
+    "ype='http://www.w3.org/2001/XMLSchema#string'>Test ontology for "
+    "ontofetch.</rdfs:comment></owl:Ontology></rdf:RDF>"))
+
+(def rdf-node-ttl
+  (str
+    "<rdf:RDF xmlns='http://test.com/resources/test-1.ttl#' xml:base="
+    "'http://test.com/resources/test-1.ttl' xmlns:rdf='http://www.w3."
+    "org/1999/02/22-rdf-syntax-ns#' xmlns:owl='http://www.w3.org/2002"
+    "/07/owl#' xmlns:xml='http://www.w3.org/XML/1998/namespace' xmlns"
+    ":xsd='http://www.w3.org/2001/XMLSchema#' xmlns:rdfs='http://www."
+    "w3.org/2000/01/rdf-schema#'><owl:Ontology rdf:about='http://test"
+    ".com/resources/test-1.owl'><owl:versionIRI rdf:resource='http://"
+    "test.com/resources/2017/test-1.ttl'/><owl:imports rdf:resource='"
+    "http://test.com/resources/test-3.ttl'/><owl:imports rdf:resource"
+    "='http://test.com/resources/test-2.ttl'/><rdfs:comment rdf:datat"
+    "ype='http://www.w3.org/2001/XMLSchema#string'>Test ontology for "
+    "ontofetch.</rdfs:comment></owl:Ontology></rdf:RDF>"))
+
+(def test-rdf-node-xml
+  (let [xml (xml/parse-xml (str xml-dir file))]
+    (clojure.string/replace
+      (xml/node->xml-str
+        (xml/get-rdf-node xml)
+        (xml/get-metadata-node xml))
+      ;; Remove newline chars
+      #"\n" "")))
+
 (deftest test-xml
-  (is (= catalog-v001 (xml/catalog-v001 i-map))))
+  (is (= catalog-v001 (xml/catalog-v001 i-map)))
+  (is (= rdf-node-xml test-rdf-node-xml))
+  (is (= rdf-node-ttl test-rdf-node-ttl)))

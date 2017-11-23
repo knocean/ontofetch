@@ -20,7 +20,7 @@
    return the mapped RDF node."
   [xml]
   {:tag :rdf:RDF,
-   :attrs (:attrs xml)})
+   :attrs (u/sort-prefixes (:attrs xml))})
 
 (defn get-metadata-node
   "Given parsed XML from an owl:Ontology,
@@ -72,7 +72,8 @@
   [imports dir]
   (reduce
    (fn [m i]
-     (let [md (get-metadata-node (u/get-path-from-purl dir i))]
+     (let [md (get-metadata-node
+               (parse-xml (u/get-path-from-purl dir i)))]
        (conj m {i (get-imports md)})))
    {} imports))
 
