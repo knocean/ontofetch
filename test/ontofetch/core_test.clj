@@ -263,7 +263,7 @@
      (xml/node->xml-str
       (jena/map-rdf-node ttl)
       (jena/map-metadata
-       "http://test.com/resources/test-1.owl"
+       "http://test.com/resources/test-1.ttl"
        ttl))
       ;; Remove newline chars
      #"\n" "")))
@@ -307,7 +307,7 @@
    "/07/owl#' xmlns:xml='http://www.w3.org/XML/1998/namespace' xmlns"
    ":xsd='http://www.w3.org/2001/XMLSchema#' xmlns:rdfs='http://www."
    "w3.org/2000/01/rdf-schema#'><owl:Ontology rdf:about='http://test"
-   ".com/resources/test-1.owl'><owl:versionIRI rdf:resource='http://"
+   ".com/resources/test-1.ttl'><owl:versionIRI rdf:resource='http://"
    "test.com/resources/2017/test-1.ttl'/><owl:imports rdf:resource='"
    "http://test.com/resources/test-3.ttl'/><owl:imports rdf:resource"
    "='http://test.com/resources/test-2.ttl'/><rdfs:comment rdf:datat"

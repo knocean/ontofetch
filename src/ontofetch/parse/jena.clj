@@ -110,7 +110,7 @@
   (->> triples
        (filter
         #(= "http://www.w3.org/2002/07/owl#Ontology"
-          (nth % 2)))
+            (nth % 2)))
        flatten
        first))
 
@@ -121,7 +121,7 @@
   (->> triples
        (filter
         #(= "http://www.w3.org/2002/07/owl#versionIRI"
-          (second %)))
+            (second %)))
        flatten
        last))
 
@@ -132,7 +132,7 @@
   (->> triples
        (filter
         #(= "http://www.w3.org/2002/07/owl#imports"
-          (second %)))
+            (second %)))
        (mapv #(nth % 2))))
 
 (defn get-more-imports
@@ -149,42 +149,46 @@
 ;; Methods to format parsed triples as maps to convert to XML
 
 (defn ns->prefix
-  "Given a full URI, a key to split (# or /), and a map of namespaces
-   (keys) and prefixes (vals), return the prefix."
-  [uri k prefs]
-  (->> (.lastIndexOf uri k)
-       (+ 1)
-       (subs uri 0)
+  "Given a full URI and a map of namespaces (keys)
+   and prefixes (vals), return the prefix."
+  [uri prefs]
+  (->> (u/get-namespace uri)
        (get prefs)
        name))
 
+(defn get-entity
+  "Given a full URI, return just the entity (namespace removed)."
+  [uri]
+  (if (s/includes? uri "#")
+    (->> (s/last-index-of uri "#")
+         (+ 1)
+         (subs uri))
+    (->> (s/last-index-of uri "/")
+         (+ 1)
+         (subs uri))))
+
 (defn get-prefixed-annotations
-  "Given [prefix-map triples], return a vector of prefixed ontology
-   annotations."
-  [ttl]
+  "Given [prefix-map triples] and an ontology IRI,
+   return a vector of prefixed ontology annotations."
+  [ttl iri]
   (let [prefs (clojure.set/map-invert (first ttl))
+        ;; Filter triples to just include ontology annotations
         md (filter
-            #(= "http://test.com/resources/test-1.ttl"
+            #(= iri
                 (first %))
             (second ttl))]
-    (reduce 
-      (fn [v md]
-          (let [[_ p o] md]
-            (if-let [prop (subs p (+ 1 (.indexOf p "#")))]
-              (if-let [pref (ns->prefix p "#" prefs)] 
-                (let [tag (keyword (str pref ":" prop))]
-                  (conj v [tag o]))
-                ;; TODO: Handle prefix not found?
-                (let [tag (keyword prop)]
-                  (conj v [tag o])))
-              (let [prop (subs p (+ 1 (.lastIndexOf p "/")))]
-                (if-let [pref (ns->prefix p "/" prefs)]
-                  (let [tag (keyword (str pref ":" prop))]
-                    (conj v [tag o]))
-                  ;; TODO: Handle prefix not found?
-                  (let [tag (keyword prop)]
-                    (conj v [tag o])))))))
-      [] md)))
+    (reduce
+     (fn [v md]
+       ;; Subject is the ontology
+       (let [[_ p o] md
+             ;; Get the entity name of the property
+             prop (get-entity p)]
+         ;; Get the prefix of the property
+         (if-let [pref (ns->prefix p prefs)]
+           (conj v [(keyword (str pref ":" prop)) o])
+           ;; TODO: Handle prefix not found?
+           (conj v [(keyword prop) o]))))
+     [] md)))
 
 (defn map-annotation
   "Given a vector to conj into and an annotation as [prop object],
@@ -198,24 +202,24 @@
         (if (nil? content)
           ;; No content parsed as resource
           (u/conj*
-            v
-            {:tag p,
-             :attrs {:rdf:resource o},
-             :content content})
+           v
+           {:tag p,
+            :attrs {:rdf:resource o},
+            :content content})
           ;; Content has unknown attrs (datatypes not parsed)
           (u/conj*
-            v
-            {:tag p,
-             :attrs
-             {:rdf:datatype
-              "http://www.w3.org/2001/XMLSchema#string"},
-             :content [content]})))))) 
+           v
+           {:tag p,
+            :attrs
+            {:rdf:datatype
+             "http://www.w3.org/2001/XMLSchema#string"},
+            :content [content]}))))))
 
 (defn map-metadata
   "Given an ontology IRI and the parsed ttl file (prefixes & triples),
    return a map of the full metadata to be parsed to XML."
   [iri ttl]
-  (let [annotations (get-prefixed-annotations ttl)]
+  (let [annotations (get-prefixed-annotations ttl iri)]
     {:tag :owl:Ontology,
      :attrs {:rdf:about iri},
      :content (reduce map-annotation [] annotations)}))

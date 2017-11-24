@@ -65,10 +65,10 @@
         trps (second ttl)]
     ;; Generate the ontology element as XML
     (f/spit-ont-element!
-      dir
-      (xml/node->xml-str
-        (jena/map-rdf-node ttl)
-        (jena/map-metadata (first redirs) ttl)))
+     dir
+     (xml/node->xml-str
+      (jena/map-rdf-node ttl)
+      (jena/map-metadata (first redirs) ttl)))
     ;; Get a list of the imports
     (let [imports (jena/get-imports trps)]
       ;; Download the direct imports

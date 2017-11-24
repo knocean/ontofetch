@@ -43,3 +43,15 @@
         base (:xml:base m)
         r (dissoc m :xmlns :xml:base)]
     (conj {:xmlns xmlns, :xml:base base} r)))
+
+(defn get-namespace
+  "Given a URI and a key to split at (# or /),
+   return just the namespace."
+  [uri]
+  (if (s/includes? uri "#")
+    (->> (s/last-index-of uri "#")
+         (+ 1)
+         (subs uri 0))
+    (->> (s/last-index-of uri "/")
+         (+ 1)
+         (subs uri 0))))
