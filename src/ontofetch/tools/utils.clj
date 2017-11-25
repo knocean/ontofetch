@@ -42,7 +42,7 @@
   (let [xmlns (:xmlns m)
         base (:xml:base m)
         r (dissoc m :xmlns :xml:base)]
-    (conj {:xmlns xmlns, :xml:base base} r)))
+    (conj {:xmlns xmlns, :xml:base base} (into (sorted-map) r))))
 
 (defn get-namespace
   "Given a URI and a key to split at (# or /),

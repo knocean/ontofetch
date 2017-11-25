@@ -1,10 +1,19 @@
 (ns ontofetch.parse.owl
   (:require
+   [clojure.string :as s]
    [clojure.java.io :as io]
    [ontofetch.tools.utils :as u])
   (:import
    (org.semanticweb.owlapi.apibinding OWLManager)
-   (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI)))
+   (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI)
+   (org.semanticweb.owlapi.search EntitySearcher)))
+
+(def base-prefixes
+  {:xmlns:owl "http://www.w3.org/2002/07/owl#",
+   :xmlns:rdf "http://www.w3.org/1999/02/22-rdf-syntax-ns#",
+   :xmlns:rdfs "http://www.w3.org/2000/01/rdf-schema#",
+   :xmlns:xml "http://www.w3.org/XML/1998/namespace",
+   :xmlns:xsd "http://www.w3.org/2001/XMLSchema#"})
 
 (defn load-ontology
   "Given a filepath to an ontology,
@@ -12,6 +21,9 @@
   [filepath]
   (let [manager (OWLManager/createOWLOntologyManager)]
     (.loadOntologyFromOntologyDocument manager (io/file filepath))))
+
+;;---------------------------- METADATA ------------------------------
+;; Methods to get specific metadata elements from an OWLOntology
 
 (defn get-ontology-iri
   "Given an OWLOntology, return the Ontology IRI."
@@ -30,9 +42,11 @@
 (defn get-imports
   "Given an OWLOntology, return a list of direct imports."
   [owl-ont]
-  (mapv
-   #(.toString (.getIRI %))
-   (iterator-seq (.iterator (.importsDeclarations owl-ont)))))
+  ;; Reverse to get in same order as XML
+  (reverse
+    (mapv
+     #(.toString (.getIRI %))
+     (iterator-seq (.iterator (.importsDeclarations owl-ont))))))
 
 (defn get-more-imports
   "Given a list of imports and a directory they are saved in,
@@ -43,3 +57,92 @@
      (let [ont (load-ontology (u/get-path-from-purl dir i))]
        (conj m {i (get-imports ont)})))
    {} imports))
+
+;;--------------------------- FORMATTING -----------------------------
+;; Methods to format ontology annotations for conversion to XML
+
+(defn parse-statement
+  "Helper function to create vector of annotations as
+   [[uri prefix property] [annotation-value datatype]]"
+  [l a]
+  (let [p (.getProperty a)
+        v (.getValue a)]
+    (conj
+     l
+     [(into [(.toStringID p)] (s/split (.toString p) #":"))
+      [(.getLiteral v) (.toString (.getDatatype v))]])))
+
+(defn get-annotations
+  "Given an OWLOntology, return the ontology annotations"
+  [owl-ont]
+  (reduce parse-statement [] (.getAnnotations owl-ont)))
+
+(defn get-base-prefixes
+  "Given an ontology IRI, return a map of base prefixes."
+  [iri]
+  (conj
+    {:xmlns (str iri "#")
+     :xml:base iri}
+    base-prefixes))
+  
+;; Need OWL, RDF, RDFS, XML, XSD... plus any that the ontology uses
+(defn map-prefixes
+  "Given an ontology IRI and a vector of annotations,
+   return a map of prefixes for parsing into XML."
+  [iri annotations]
+  ;; Add prefixes used in annotations
+  ;; For the most part, these should be defined by base prefixes
+  ;; but some ontologies may use their own or imported props...
+  (reduce
+   (fn [m a]
+     (let [[[uri pref _] _] a
+           k (keyword (str "xmlns:" pref))]
+       ;; Don't need to update if it's already in there
+       (if-not (contains? m k)
+         (conj m {k (u/get-namespace uri)})
+         m)))
+   ;; Put into the map of base prefixes
+   (get-base-prefixes iri) annotations))
+
+(defn add-import
+  "Helper function to map imports for XML parsing."
+  [v i]
+  (conj v
+    {:tag :owl:imports,
+     :attrs {:rdf:resource i},
+     :content nil}))
+
+(defn add-annotation
+  "Helper function to map annotations for XML parsing."
+  [v annotation]
+  (let [[[_ pref ap] [value dt]] annotation]
+    (if-not (nil? dt)
+      (conj v
+        {:tag (keyword (str pref ":" ap))
+         :attrs {:rdf:datatype dt}
+         :content [value]})
+      (conj v
+        {:tag (keyword (str pref ":" ap))
+         :attrs nil
+         :content [value]}))))  
+
+(defn map-rdf-node
+  "Given an ontology IRI and the annotations,
+   return a mapped RDF node for conversion to XML."
+  [iri annotations]
+  {:tag :rdf:RDF,
+   :attrs (map-prefixes iri annotations)})
+
+(defn map-metadata
+  "Given the IRI and version IRI, a list of direct imports, and the
+   annotations, return the mapped metadata for conversion to XML."
+  [iri version imports annotations]
+  {:tag :owl:Ontology,
+   :attrs {:rdf:about iri},
+   :content
+   (into
+    (reduce add-import
+      [{:tag :owl:versionIRI,
+        :attrs {:rdf:resource version}}] 
+      imports)
+    (reduce add-annotation [] annotations))})

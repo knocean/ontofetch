@@ -265,8 +265,24 @@
       (jena/map-metadata
        "http://test.com/resources/test-1.ttl"
        ttl))
-      ;; Remove newline chars
+     ;; Remove newline chars
      #"\n" "")))
+
+;; -------------------------- ONTOFETCH.OWL --------------------------
+
+;; Prepare for use in XML test
+(def test-rdf-node-owl
+  (let [iri "http://test.com/resources/test-1.owl"
+        version "http://test.com/resources/2017/test-1.owl"
+        owl-ont (owl/load-ontology (str owl-dir file))
+        imports (owl/get-imports owl-ont)
+        annotations (owl/get-annotations owl-ont)]
+    (clojure.string/replace
+      (xml/node->xml-str
+        (owl/map-rdf-node iri annotations)
+        (owl/map-metadata iri version imports annotations))
+      ;; Remove newline chars
+      #"\n" "")))
 
 ;; -------------------------- ONTOFETCH.XML --------------------------
 
@@ -284,14 +300,14 @@
             ["http://test.com/resources/test-4.owl"],
             "http://test.com/resources/test-3.owl" []})
 
-(def rdf-node-xml
+(def rdf-node
   (str
    "<rdf:RDF xmlns='http://test.com/resources/test-1.owl#' xml:base="
-   "'http://test.com/resources/test-1.owl' xmlns:rdfs='http://www.w3"
-   ".org/2000/01/rdf-schema#' xmlns:xsd='http://www.w3.org/2001/XMLS"
-   "chema#' xmlns:xml='http://www.w3.org/XML/1998/namespace' xmlns:o"
-   "wl='http://www.w3.org/2002/07/owl#' xmlns:rdf='http://www.w3.org"
-   "/1999/02/22-rdf-syntax-ns#'><owl:Ontology rdf:about='http://test"
+   "'http://test.com/resources/test-1.owl' xmlns:owl='http://www.w3."
+   "org/2002/07/owl#' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-sy"
+   "ntax-ns#' xmlns:rdfs='http://www.w3.org/2000/01/rdf-schema#' xml"
+   "ns:xml='http://www.w3.org/XML/1998/namespace' xmlns:xsd='http://"
+   "www.w3.org/2001/XMLSchema#'><owl:Ontology rdf:about='http://test"
    ".com/resources/test-1.owl'><owl:versionIRI rdf:resource='http://"
    "test.com/resources/2017/test-1.owl'/><owl:imports rdf:resource='"
    "http://test.com/resources/test-3.owl'/><owl:imports rdf:resource"
@@ -302,11 +318,11 @@
 (def rdf-node-ttl
   (str
    "<rdf:RDF xmlns='http://test.com/resources/test-1.ttl#' xml:base="
-   "'http://test.com/resources/test-1.ttl' xmlns:rdf='http://www.w3."
-   "org/1999/02/22-rdf-syntax-ns#' xmlns:owl='http://www.w3.org/2002"
-   "/07/owl#' xmlns:xml='http://www.w3.org/XML/1998/namespace' xmlns"
-   ":xsd='http://www.w3.org/2001/XMLSchema#' xmlns:rdfs='http://www."
-   "w3.org/2000/01/rdf-schema#'><owl:Ontology rdf:about='http://test"
+   "'http://test.com/resources/test-1.ttl' xmlns:owl='http://www.w3."
+   "org/2002/07/owl#' xmlns:rdf='http://www.w3.org/1999/02/22-rdf-sy"
+   "ntax-ns#' xmlns:rdfs='http://www.w3.org/2000/01/rdf-schema#' xml"
+   "ns:xml='http://www.w3.org/XML/1998/namespace' xmlns:xsd='http://"
+   "www.w3.org/2001/XMLSchema#'><owl:Ontology rdf:about='http://test"
    ".com/resources/test-1.ttl'><owl:versionIRI rdf:resource='http://"
    "test.com/resources/2017/test-1.ttl'/><owl:imports rdf:resource='"
    "http://test.com/resources/test-3.ttl'/><owl:imports rdf:resource"
@@ -325,5 +341,6 @@
 
 (deftest test-xml
   (is (= catalog-v001 (xml/catalog-v001 i-map)))
-  (is (= rdf-node-xml test-rdf-node-xml))
+  (is (= rdf-node test-rdf-node-owl))
+  (is (= rdf-node test-rdf-node-xml))
   (is (= rdf-node-ttl test-rdf-node-ttl)))

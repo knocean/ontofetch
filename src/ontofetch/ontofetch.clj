@@ -98,7 +98,16 @@
   ;; Get the ontology as an OWLOntology
   (let [owl-ont (owl/load-ontology filepath)]
     ;; Get a list of the imports
-    (let [imports (owl/get-imports owl-ont)]
+    (let [iri (owl/get-ontology-iri owl-ont)
+          version (owl/get-version-iri owl-ont)
+          imports (owl/get-imports owl-ont)
+          annotations (owl/get-annotations owl-ont)]
+      ;; Generate the ontology element as XML
+      (f/spit-ont-element!
+        dir
+        (xml/node->xml-str
+          (owl/map-rdf-node iri annotations)
+          (owl/map-metadata iri version imports annotations)))
       ;; Download the direct imports
       (h/fetch-imports! dir imports)
       ;; Get a map of direct imports (key) & indirect imports (vals)
@@ -112,9 +121,7 @@
          (u/map-request
           filepath
           redirs
-          [(owl/get-ontology-iri owl-ont)
-           (owl/get-version-iri owl-ont)
-           i-map])
+          [iri version i-map])
          ;; Catalog for protege
          (xml/catalog-v001 i-map))))))
 
