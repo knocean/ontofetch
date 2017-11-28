@@ -44,9 +44,9 @@
   [owl-ont]
   ;; Reverse to get in same order as XML
   (reverse
-    (mapv
-     #(.toString (.getIRI %))
-     (iterator-seq (.iterator (.importsDeclarations owl-ont))))))
+   (mapv
+    #(.toString (.getIRI %))
+    (iterator-seq (.iterator (.importsDeclarations owl-ont))))))
 
 (defn get-more-imports
   "Given a list of imports and a directory they are saved in,
@@ -81,10 +81,10 @@
   "Given an ontology IRI, return a map of base prefixes."
   [iri]
   (conj
-    {:xmlns (str iri "#")
-     :xml:base iri}
-    base-prefixes))
-  
+   {:xmlns (str iri "#")
+    :xml:base iri}
+   base-prefixes))
+
 ;; Need OWL, RDF, RDFS, XML, XSD... plus any that the ontology uses
 (defn map-prefixes
   "Given an ontology IRI and a vector of annotations,
@@ -108,9 +108,9 @@
   "Helper function to map imports for XML parsing."
   [v i]
   (conj v
-    {:tag :owl:imports,
-     :attrs {:rdf:resource i},
-     :content nil}))
+        {:tag :owl:imports,
+         :attrs {:rdf:resource i},
+         :content nil}))
 
 (defn add-annotation
   "Helper function to map annotations for XML parsing."
@@ -118,13 +118,13 @@
   (let [[[_ pref ap] [value dt]] annotation]
     (if-not (nil? dt)
       (conj v
-        {:tag (keyword (str pref ":" ap))
-         :attrs {:rdf:datatype dt}
-         :content [value]})
+            {:tag (keyword (str pref ":" ap))
+             :attrs {:rdf:datatype dt}
+             :content [value]})
       (conj v
-        {:tag (keyword (str pref ":" ap))
-         :attrs nil
-         :content [value]}))))  
+            {:tag (keyword (str pref ":" ap))
+             :attrs nil
+             :content [value]}))))
 
 (defn map-rdf-node
   "Given an ontology IRI and the annotations,
@@ -142,7 +142,7 @@
    :content
    (into
     (reduce add-import
-      [{:tag :owl:versionIRI,
-        :attrs {:rdf:resource version}}] 
-      imports)
+            [{:tag :owl:versionIRI,
+              :attrs {:rdf:resource version}}]
+            imports)
     (reduce add-annotation [] annotations))})

@@ -278,11 +278,11 @@
         imports (owl/get-imports owl-ont)
         annotations (owl/get-annotations owl-ont)]
     (clojure.string/replace
-      (xml/node->xml-str
-        (owl/map-rdf-node iri annotations)
-        (owl/map-metadata iri version imports annotations))
+     (xml/node->xml-str
+      (owl/map-rdf-node iri annotations)
+      (owl/map-metadata iri version imports annotations))
       ;; Remove newline chars
-      #"\n" "")))
+     #"\n" "")))
 
 ;; -------------------------- ONTOFETCH.XML --------------------------
 

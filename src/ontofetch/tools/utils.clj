@@ -2,6 +2,8 @@
   (:require
    [clojure.string :as s]))
 
+;; Helper functions!
+
 (defn map-metadata
   "Given a vector containing [ontology-iri version-iri imports],
    return a map."
@@ -41,8 +43,8 @@
   [m]
   (let [xmlns (:xmlns m)
         base (:xml:base m)
-        r (dissoc m :xmlns :xml:base)]
-    (conj {:xmlns xmlns, :xml:base base} (into (sorted-map) r))))
+        others (dissoc m :xmlns :xml:base)]
+    (conj {:xmlns xmlns, :xml:base base} (into (sorted-map) others))))
 
 (defn get-namespace
   "Given a URI and a key to split at (# or /),

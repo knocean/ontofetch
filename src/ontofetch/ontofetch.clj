@@ -7,7 +7,7 @@
    [ontofetch.tools.http :as h]
    [ontofetch.tools.utils :as u]))
 
-;; TODO: Divide up methods to create different CLI args
+;; TODO: Divide up methods to create different CLI args?
 
 (defn try-get-imports
   "Given a list of imports and the directory they are saved in,
@@ -53,7 +53,8 @@
          (xml/get-version-iri md)
          i-map])
        ;; Catalog for protege
-       (xml/catalog-v001 i-map)))))
+       (if-not (empty? imports)
+         (xml/catalog-v001 i-map))))))
 
 (defn try-jena
   "Given redirects to an ontology, a directory that it was downloaded
@@ -88,7 +89,8 @@
            (jena/get-version-iri trps)
            i-map])
          ;; Catalog for protege
-         (xml/catalog-v001 i-map))))))
+         (if-not (empty? imports)
+           (xml/catalog-v001 i-map)))))))
 
 (defn try-owl
   "Given redirects to an ontology, a directory that it was downloaded
@@ -104,10 +106,10 @@
           annotations (owl/get-annotations owl-ont)]
       ;; Generate the ontology element as XML
       (f/spit-ont-element!
-        dir
-        (xml/node->xml-str
-          (owl/map-rdf-node iri annotations)
-          (owl/map-metadata iri version imports annotations)))
+       dir
+       (xml/node->xml-str
+        (owl/map-rdf-node iri annotations)
+        (owl/map-metadata iri version imports annotations)))
       ;; Download the direct imports
       (h/fetch-imports! dir imports)
       ;; Get a map of direct imports (key) & indirect imports (vals)
@@ -123,7 +125,8 @@
           redirs
           [iri version i-map])
          ;; Catalog for protege
-         (xml/catalog-v001 i-map))))))
+         (if-not (empty? imports)
+           (xml/catalog-v001 i-map)))))))
 
 (defn parse-ontology
   [redirs dir filepath]
