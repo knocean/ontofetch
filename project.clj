@@ -11,8 +11,12 @@
            [org.clojure/clojure "1.8.0"]
            [org.clojure/data.xml "0.0.8"]
            [org.clojure/tools.cli "0.3.5"]]
-  :main ^:skip-aot ontofetch.core
+  :main ontofetch.core
   :target-path "target/%s"
+  :bin {:name "ontofetch"
+        :bin-path "target"
+        :bootclasspath true}
   :profiles {:uberjar {:aot :all}}
-  :plugins [[lein-cljfmt "0.5.7"]
+  :plugins [[lein-bin "0.3.5"]
+            [lein-cljfmt "0.5.7"]
             [lein-cloverage "1.0.10"]])
