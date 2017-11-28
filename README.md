@@ -14,16 +14,15 @@ Or...
 
 	$ target/ontofetch [opts]
 
-You can also rebuild just by running `lein bin` in the main directory (make sure you have [Leiningen](https://leiningen.org) 2.x, and see [lein-bin](https://github.com/Raynes/lein-bin) if you're curious).
+You can also rebuild just by running `lein bin` in the main directory (see [lein-bin](https://github.com/Raynes/lein-bin) if you're curious). This requires [Leiningen](https://leiningen.org) 2.x.
 
 ## Options
 
-ontofetch accepts no arguments at this time (there's only one operation!), only options.
-To do a basic fetch operation:
+ontofetch only accepts options at this time (no args):
 
 	$ ./ontofetch --dir obi --purl http://purl.obolibrary.org/obo/obi.owl
     
-(You can also compress the created directory (containing the ontology & its imports) by adding a `--zip` flag)
+(You can compress the created directory by adding a `--zip` flag)
 
 This will create a directory 'obi'\* and download the ontology at the given PURL to it. The following files are also generated:
   * `obi-element.owl` - XML output of just the owl:Ontology element
@@ -32,11 +31,12 @@ This will create a directory 'obi'\* and download the ontology at the given PURL
   * `report.html` - a formatted report of the catalog (above)
 
 \* The directory should not already exist, and can only include letters, numbers, or underscores.
+
 \*\* only created if there are direct imports in the downloaded ontology
 
 ## Testing
 
-ontofetch is built using [Leiningen](https://leiningen.org) and includes plugins for testing. There is only one test file: `test/ontofetch/core_test.clj`. It relies on files in `test/resources`. `lein test` is the easiest way to quickly run all tests, but running `lein cloverage` will also return a report of test coverage (see [cloverage](https://github.com/cloverage/cloverage)).
+ontofetch is built using [Leiningen](https://leiningen.org) and includes plugins for testing. `lein test` is the easiest way to quickly run all tests, but running `lein cloverage` will also return a report of test coverage (see [cloverage](https://github.com/cloverage/cloverage)). Make sure you have the full test directory, as required test files live in `test/resources`.
 
 ## Issues
 
