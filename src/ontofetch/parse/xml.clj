@@ -87,7 +87,8 @@
   (->> {:content (vector metadata)}
        (into rdf-node)
        x/emit-element
-       with-out-str))
+       with-out-str
+       u/replace-chars))
 
 (defn catalog-v001
   "Generates catalog-v001 from set of imports."

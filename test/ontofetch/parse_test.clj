@@ -18,14 +18,11 @@
 ;; Prepare for use in XML test
 (def test-rdf-node-ttl
   (let [ttl (jena/read-triples (str jena-dir file-ttl))]
-    (clojure.string/replace
-     (node->xml-str
-      (jena/map-rdf-node ttl)
-      (jena/map-metadata
-       "http://test.com/resources/test-1.ttl"
-       ttl))
-     ;; Remove newline chars
-     #"\n" "")))
+   (node->xml-str
+    (jena/map-rdf-node ttl)
+    (jena/map-metadata
+     "http://test.com/resources/test-1.ttl"
+     ttl))))
 
 ;; -------------------------- ONTOFETCH.OWL --------------------------
 ;; Prepare for use in XML test
@@ -35,12 +32,9 @@
         owl-ont (owl/load-ontology (str owl-dir file))
         imports (owl/get-imports owl-ont)
         annotations (owl/get-annotations owl-ont)]
-    (clojure.string/replace
-     (node->xml-str
-      (owl/map-rdf-node iri annotations)
-      (owl/map-metadata iri version imports annotations))
-      ;; Remove newline chars
-     #"\n" "")))
+   (node->xml-str
+    (owl/map-rdf-node iri annotations)
+    (owl/map-metadata iri version imports annotations))))
 
 ;; -------------------------- ONTOFETCH.XML --------------------------
 
@@ -90,12 +84,9 @@
 
 (def test-rdf-node-xml
   (let [xml (parse-xml (str xml-dir file))]
-    (clojure.string/replace
-     (node->xml-str
-      (get-rdf-node xml)
-      (get-metadata-node xml))
-      ;; Remove newline chars
-     #"\n" "")))
+   (node->xml-str
+    (get-rdf-node xml)
+    (get-metadata-node xml))))
 
 (deftest test-xml
   (is (= test-catalog-v001 (catalog-v001 i-map)))

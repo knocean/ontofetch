@@ -31,6 +31,15 @@
   [dir url]
   (str dir "/" (last (s/split url #"/"))))
 
+;; TODO: Find any other special chars that might screw up Protege
+(defn replace-chars
+  "Given a string, return a string with special chars replaced with
+   the character reference."
+  [string]
+  (-> string
+      (s/replace "&" "&amp;")
+      (s/replace "\n" "")))
+
 (defn conj*
   "Given a seq and an element to append, return a conj'd vector with
    the new element at the end."

@@ -23,7 +23,7 @@
   "Given a directory name, checks if it already exists and that the
    name is formatted correctly."
   [dir]
-  (when-not (re-matches #"[A-Za-z0-9_/]+" dir)
+  (when-not (re-matches #"[A-Za-z0-9_/.]+" dir)
     (throw
      (Exception.
       (str "Directory name can only include letters, numbers,"
@@ -73,7 +73,7 @@
   "Given a directory and the XML string of the ontology element,
    spit the file as [dir]-element.owl."
   [dir ont-element]
-  (spit (str dir "/" dir "-element.owl") ont-element))
+  (spit (str dir "-element.owl") ont-element))
 
 (defn update-catalog!
   "Given a map of request details, add the details to the catalog atom
