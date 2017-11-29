@@ -57,3 +57,15 @@
     (->> (s/last-index-of uri "/")
          (+ 1)
          (subs uri 0))))
+
+(defn get-entity-id
+  "Given a URI and a key to split at (# or /),
+   return just the entity identifier."
+  [uri]
+  (if (s/includes? uri "#")
+    (->> (s/last-index-of uri "#")
+         (+ 1)
+         (subs uri))
+    (->> (s/last-index-of uri "/")
+         (+ 1 )
+         (subs uri))))

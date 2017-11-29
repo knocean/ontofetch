@@ -61,6 +61,30 @@
 ;;--------------------------- FORMATTING -----------------------------
 ;; Methods to format ontology annotations for conversion to XML
 
+(defn parse-property
+  "Given a property from an Annotation,
+   return [uri prefix property]."
+  [p]
+  (let [p-str (.toStringID p)]
+    ;; Check if it's a full URI or a CURIE
+    (if (s/includes? p-str "http://")
+      [p-str
+       ;; Create a prefix from the full URI
+       (u/get-entity-id
+        (s/join "" (drop-last (u/get-namespace p-str))))
+       (u/get-entity-id p-str)]
+      (into [p-str] (s/split (.toString p) #":"))))) 
+
+(defn parse-value
+  "Given a value from an Annotation,
+   return [annotation-value datatype]."
+  [v]
+  (if (instance? IRI v)
+    ;; Parse IRIs to string (TODO: FIX ME! Needs to parse as resource)
+    [(u/get-entity-id (.getIRIString v))
+     "http://www.w3.org/2001/XMLSchema#string"]
+    [(.getLiteral v) (.toString (.getDatatype v))]))
+
 (defn parse-statement
   "Helper function to create vector of annotations as
    [[uri prefix property] [annotation-value datatype]]"
@@ -69,13 +93,13 @@
         v (.getValue a)]
     (conj
      l
-     [(into [(.toStringID p)] (s/split (.toString p) #":"))
-      [(.getLiteral v) (.toString (.getDatatype v))]])))
+     [(parse-property p)
+      (parse-value v)])))
 
 (defn get-annotations
   "Given an OWLOntology, return the ontology annotations"
   [owl-ont]
-  (reduce parse-statement [] (.getAnnotations owl-ont)))
+  (reduce parse-statement [] (.getAnnotations owl-ont))) 
 
 (defn get-base-prefixes
   "Given an ontology IRI, return a map of base prefixes."
@@ -103,6 +127,8 @@
          m)))
    ;; Put into the map of base prefixes
    (get-base-prefixes iri) annotations))
+
+;; TODO: Test grabbing prefixes ^^ (i.e. using dc)
 
 (defn add-import
   "Helper function to map imports for XML parsing."
