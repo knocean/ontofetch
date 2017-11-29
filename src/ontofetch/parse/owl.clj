@@ -32,6 +32,7 @@
     (if (.isPresent iri)
       (.toString (.get iri)))))
 
+;; Will always return purl.obolibrary.org
 (defn get-version-iri
   "Given an OWLOntology, return the Version IRI."
   [owl-ont]
@@ -39,6 +40,7 @@
     (if (.isPresent iri)
       (.toString (.get iri)))))
 
+;; TODO: OBO format does not load imports :(
 (defn get-imports
   "Given an OWLOntology, return a list of direct imports."
   [owl-ont]
@@ -68,11 +70,16 @@
   (let [p-str (.toStringID p)]
     ;; Check if it's a full URI or a CURIE
     (if (s/includes? p-str "http://")
-      [p-str
-       ;; Create a prefix from the full URI
-       (u/get-entity-id
-        (s/join "" (drop-last (u/get-namespace p-str))))
-       (u/get-entity-id p-str)]
+      ;; Create a prefix from the full URI
+      (let [pref (u/get-entity-id
+                  (s/join "" (drop-last (u/get-namespace p-str))))]
+        [p-str
+         ;; rdf-schema is rdfs
+         (if (= pref "rdf-schema")
+           "rdfs"
+           pref)
+         (u/get-entity-id p-str)])
+      ;; Otherwise split the CURIE
       (into [p-str] (s/split (.toString p) #":"))))) 
 
 (defn parse-value

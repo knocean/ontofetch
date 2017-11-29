@@ -1,0 +1,6 @@
+format-version: 1.2
+data-version: 2017/test-2
+remark: Test ontology for ontofetch.
+import: http://test.com/resources/test-4.owl
+ontology: test-
+
