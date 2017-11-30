@@ -43,10 +43,13 @@
 (defn fetch-ontology!
   "Given a filepath and a URL, download contents of the URL."
   [filepath final-url]
-  (->> final-url
-       slurp
-       (spit filepath)
-       (timeout final-url 50000)))
+  ;; Skip imports that resolve to berkeleybop.org
+  ;; they do not exist at that PURL?
+  (if-not (= "http://ontologies.berkeleybop.org" final-url)
+    (->> final-url
+         slurp
+         (spit filepath)
+         (timeout final-url 50000))))
 
 ;; map doesn't work across this vector?
 (defn fetch-imports!
@@ -59,11 +62,11 @@
       ;; Try to get the redirects
       (if-let [url (last (get-redirects (first is)))]
         (do
-          (fetch-ontology! (u/get-path-from-purl dir url) url)
+          (fetch-ontology! (u/get-path-from-purl dir (first is)) url)
           (if-not (empty? (rest is))
             (recur (rest is) (+ n 1))))
         ;; If not redirs, import cannot be fetched
         (do
-          (println (str "Cannot fetch import " (first is)))
+          (println (str "Cannot fetch " (first is)))
           (if-not (empty? (rest is))
             (recur (rest is) (+ n 1))))))))

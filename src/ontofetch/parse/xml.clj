@@ -1,6 +1,7 @@
 (ns ontofetch.parse.xml
   (:require
    [clojure.data.xml :as data]
+   [clojure.java.io :as io]
    [clojure.string :as s]
    [clojure.xml :as x]
    [clojure.zip :as zip]
@@ -72,9 +73,13 @@
   [imports dir]
   (reduce
    (fn [m i]
-     (let [md (get-metadata-node
-               (parse-xml (u/get-path-from-purl dir i)))]
-       (conj m {i (get-imports md)})))
+     (if (.exists (io/as-file i))
+       (let [md (get-metadata-node
+                    (parse-xml (u/get-path-from-purl dir i)))]
+         (conj m {i (get-imports md)}))
+       m))
+   ;; TODO: If the imports are not successfully fetched,
+   ;;       this returns empty
    {} imports))
 
 ;;--------------------------- XML STRING -----------------------------
