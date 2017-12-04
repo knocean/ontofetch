@@ -80,7 +80,7 @@
            pref)
          (u/get-entity-id p-str)])
       ;; Otherwise split the CURIE
-      (into [p-str] (s/split (.toString p) #":"))))) 
+      (into [p-str] (s/split (.toString p) #":")))))
 
 (defn parse-value
   "Given a value from an Annotation,
@@ -106,7 +106,7 @@
 (defn get-annotations
   "Given an OWLOntology, return the ontology annotations"
   [owl-ont]
-  (reduce parse-statement [] (.getAnnotations owl-ont))) 
+  (reduce parse-statement [] (.getAnnotations owl-ont)))
 
 (defn get-base-prefixes
   "Given an ontology IRI, return a map of base prefixes."

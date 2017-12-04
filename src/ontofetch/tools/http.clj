@@ -48,8 +48,7 @@
   (if-not (= "http://ontologies.berkeleybop.org" final-url)
     (->> final-url
          slurp
-         (spit filepath)
-         (timeout final-url 50000))))
+         (spit filepath))))
 
 ;; map doesn't work across this vector?
 (defn fetch-imports!

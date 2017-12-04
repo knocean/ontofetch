@@ -23,6 +23,27 @@
   {:tag :rdf:RDF,
    :attrs (u/sort-prefixes (:attrs xml))})
 
+(defn update-map-vals
+  "Given a parsed metadata node from an owl:Ontology,
+   update the :content tags to remove special characters."
+  [md]
+  (assoc
+   md
+   :content
+   (reduce
+    (fn [l m]
+      (conj
+       l
+       ;; Update the content in each annotation
+       (update
+        m
+        :content
+        (fn [c]
+          ;; Grab out of vector, then put update back in
+          (if-not (nil? c)
+            (vector (u/replace-chars (first c))))))))
+    [] (:content md))))
+
 (defn get-metadata-node
   "Given parsed XML from an owl:Ontology,
    return the Ontology metadata."
@@ -33,7 +54,8 @@
        (map (fn [xml-node] [(:tag xml-node) xml-node]))
        (filter #(= :owl:Ontology (first %)))
        first
-       second))
+       second
+       update-map-vals))
 
 ;;---------------------------- METADATA ------------------------------
 ;; Methods to get specific metadata elements from the metadata node
@@ -73,13 +95,10 @@
   [imports dir]
   (reduce
    (fn [m i]
-     (if (.exists (io/as-file i))
-       (let [md (get-metadata-node
-                    (parse-xml (u/get-path-from-purl dir i)))]
-         (conj m {i (get-imports md)}))
-       m))
-   ;; TODO: If the imports are not successfully fetched,
-   ;;       this returns empty
+     (let [f (u/get-path-from-purl dir i)]
+       (if (.exists (io/as-file f))
+         (conj m {i (get-imports (get-metadata-node (parse-xml f)))})
+         m)))
    {} imports))
 
 ;;--------------------------- XML STRING -----------------------------
@@ -92,8 +111,7 @@
   (->> {:content (vector metadata)}
        (into rdf-node)
        x/emit-element
-       with-out-str
-       u/replace-chars))
+       with-out-str))
 
 (defn catalog-v001
   "Generates catalog-v001 from set of imports."
