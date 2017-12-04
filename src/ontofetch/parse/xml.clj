@@ -54,8 +54,7 @@
        (map (fn [xml-node] [(:tag xml-node) xml-node]))
        (filter #(= :owl:Ontology (first %)))
        first
-       second
-       update-map-vals))
+       second))
 
 ;;---------------------------- METADATA ------------------------------
 ;; Methods to get specific metadata elements from the metadata node
@@ -108,7 +107,8 @@
   "Given a mapped RDF node and a map of the metadata,
    return the Ontology element as XML string."
   [rdf-node metadata]
-  (->> {:content (vector metadata)}
+  (->> {:content
+        (vector (update-map-vals metadata))}
        (into rdf-node)
        x/emit-element
        with-out-str))
