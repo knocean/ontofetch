@@ -11,7 +11,7 @@
   "Given a filepath to an ontology,
    return parsed XML."
   [filepath]
-  (x/parse (java.io.FileInputStream. filepath)))
+  (data/parse (java.io.FileInputStream. filepath)))
 
 ;;------------------------------ NODES -------------------------------
 ;; Methods to get specific nodes from parsed XML
@@ -21,7 +21,7 @@
    return the mapped RDF node."
   [xml]
   {:tag :rdf:RDF,
-   :attrs (u/sort-prefixes (:attrs xml))})
+   :attrs (:attrs xml)})
 
 (defn update-map-vals
   "Given a parsed metadata node from an owl:Ontology,
@@ -52,7 +52,7 @@
        zip/xml-zip
        zip/children
        (map (fn [xml-node] [(:tag xml-node) xml-node]))
-       (filter #(= :owl:Ontology (first %)))
+       (filter #(= :Ontology (first %)))
        first
        second))
 
@@ -63,7 +63,7 @@
   "Given an XML node containing ontology metadata,
    return the ontology IRI."
   [xml]
-  (get-in xml [:attrs :rdf:about]))
+  (get-in xml [:attrs :rdf/about]))
 
 (defn get-version-iri
   "Given an XML node containing ontology metadata,
@@ -72,8 +72,8 @@
   (first
    (reduce
     (fn [s c]
-      (if (= (:tag c) :owl:versionIRI)
-        (conj s (get-in c [:attrs :rdf:resource]))
+      (if (= (:tag c) :versionIRI)
+        (conj s (get-in c [:attrs :rdf/resource]))
         s))
     [] (:content xml))))
 
@@ -83,8 +83,8 @@
   [xml]
   (reduce
    (fn [s c]
-     (if (= (:tag c) :owl:imports)
-       (conj s (get-in c [:attrs :rdf:resource]))
+     (if (= (:tag c) :imports)
+       (conj s (get-in c [:attrs :rdf/resource]))
        s))
    [] (:content xml)))
 
@@ -101,17 +101,19 @@
    {} imports))
 
 ;;--------------------------- XML STRING -----------------------------
-;; Methods to convert maps of XML nodes to XML strings
+;; Methods to convert maps of nodes to XML strings
 
 (defn node->xml-str
   "Given a mapped RDF node and a map of the metadata,
    return the Ontology element as XML string."
   [rdf-node metadata]
-  (->> {:content
-        (vector (update-map-vals metadata))}
-       (into rdf-node)
-       x/emit-element
-       with-out-str))
+  (s/replace
+   (->> {:content
+         (vector (update-map-vals metadata))}
+        (into rdf-node)
+        x/emit-element
+        with-out-str)
+   "'" "\""))
 
 (defn catalog-v001
   "Generates catalog-v001 from set of imports."

@@ -34,7 +34,7 @@
         md (xml/get-metadata-node xml)
         imports (xml/get-imports md)]
     ;; Create an XML file with just the Ontology element
-    (f/spit-ont-element! dir (xml/node->xml-str rdf md))
+    (f/spit-ont-element! dir (f/extract-element filepath))
     ;; Download the direct imports
     (h/fetch-imports! dir imports)
     ;; Get a map of direct imports (key) & indirect imports (vals)

@@ -38,43 +38,15 @@
           (recur (conj redirs new-url) (:location headers))
           nil)))))       ;; Anthing else will not be returned
 
-;; TODO: Better error handling
-;;       Will return timeout if the folder isn't created
 (defn fetch-ontology!
-  "Given a filepath and a URL, download contents of the URL."
-  [filepath final-url]
-  ;; Skip imports that resolve to ontologies.berkeleybop.org
-  ;; they do not exist at that PURL...
-  (if-not (= "http://ontologies.berkeleybop.org" final-url)
-    (->> final-url
-         slurp
-         (spit filepath))))
-
-(defn lazy-fetch
-  "Given a file, return a lazy sequence of its lines."
-  [file]
-  (letfn [(helper [rdr]
-                  (lazy-seq
-                    (if-let [line (.readLine rdr)]
-                      (cons line (helper rdr))
-                      (do (.close rdr) nil))))]
-         (helper (clojure.java.io/reader file))))
-
-(defn fetch-big-ontology!
-  "Given a filepath and a URL to an XML file,
-   download just the owl:Ontology element.
-   This is only used for ontologies too big to slurp."
-  [filepath final-url]
-  (spit filepath
-    (clojure.string/join 
-      "\n" 
-      (into
-        (vec
-          (take-while
-           #(not (clojure.string/includes? % "</owl:Ontology>"))
-           (lazy-fetch final-url)))
-        ["    </owl:Ontology>"
-         "</rdf:RDF>"]))))
+  "Given a filepath and a URL to an ontology,
+   download the contents to the file."
+  [filepath url]
+  (if-not (= "http://ontologies.berkeleybop.org" url)
+    (with-open [r (clojure.java.io/reader url)]
+      (with-open [w (clojure.java.io/writer filepath)]
+        (doseq [line (line-seq r)]
+          (.write w (str line "\n")))))))
 
 ;; map doesn't work across this vector?
 (defn fetch-imports!

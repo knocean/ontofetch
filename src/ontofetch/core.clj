@@ -21,9 +21,6 @@
    ["-p" "--purl PURL" "PURL"
     :desc "PURL of the ontology to download."
     :parse-fn #(String. %)]
-   ["-b" "--big" "Fetch elements of a large ontology."
-    :desc "Only fetch the owl:Ontology element of large XML files."
-    :default false]
    ["-z" "--zip" "Zip Results"
     :desc "Compress the results."
     :default false]
@@ -81,14 +78,11 @@
        (if ok? 0 1)
        exit-msg)
       ;; No exit msg, get parsed options
-      (let [{:keys [dir purl big zip]} opts]
+      (let [{:keys [dir purl zip]} opts]
         (let [redirs (h/get-redirects purl)
               filepath (u/get-path-from-purl (f/make-dir! dir) purl)]
           ;; Download the ontology to created dir
-          (if-not big
-            (h/fetch-ontology! filepath (last redirs))
-            ;; This will only return the owl:Ontology element
-            (h/fetch-big-ontology! filepath (last redirs)))
+          (h/fetch-ontology! filepath (last redirs))
           ;; Do all the stuff - successful if it returns true
           (if (true? (parse-ontology redirs dir filepath))
             (do

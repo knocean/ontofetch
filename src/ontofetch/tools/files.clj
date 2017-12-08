@@ -1,8 +1,8 @@
 (ns ontofetch.tools.files
   (:require
-   [clojure.edn :as edn]
    [clojure.java.io :as io]
    [clojure.pprint :as pp]
+   [clojure.string :as s]
    [clojure.tools.file-utils :as ctfu]
    [ontofetch.parse.xml :as xml]
    [ontofetch.tools.html :as h])
@@ -13,9 +13,26 @@
 (def +report+ "report.html")
 (def catalog (atom
               (if (.exists (io/as-file +catalog+))
-                (edn/read-string (slurp +catalog+))
+                (clojure.edn/read-string (slurp +catalog+))
                 [])))
 (def ont-elements "resources/elements/")
+
+;;----------------------------- READING ------------------------------
+
+(defn extract-element
+  "Given the filepath to an RDF-XML format ontology,
+   extract just the owl:Ontology element."
+  [filepath]
+  (with-open [r (clojure.java.io/reader filepath)]
+    (s/join
+     "\n"
+     (into
+      (vec
+       (take-while
+        #(not (s/includes? % "</owl:Ontology>"))
+        (line-seq r)))
+      ["    </owl:Ontology>"
+       "</rdf:RDF>"]))))
 
 ;;----------------------------- FOLDERS ------------------------------
 

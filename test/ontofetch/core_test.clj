@@ -5,9 +5,10 @@
 
 (def summary
   (str
-   "  -d, --dir  DIR   Directory to save downloads.\n  -p, --purl PUR"
-   "L  PURL of the ontology to download.\n  -z, --zip        Compress"
-   " the results.\n  -h, --help"))
+   "  -d, --dir  DIR   Directory to save downloads."
+   "\n  -p, --purl PURL  PURL of the ontology to download."
+   "\n  -z, --zip        Compress the results."
+   "\n  -h, --help"))
 
 (def input ["--dir" "d" "--purl" "p" "--zip"])
 
