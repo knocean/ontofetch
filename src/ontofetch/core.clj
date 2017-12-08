@@ -2,6 +2,7 @@
   (:use
    [ontofetch.ontofetch])
   (:require
+   [clj-time.local :as t]
    [clojure.string :as s]
    [clojure.tools.cli :refer [parse-opts]]
    [ontofetch.tools.files :as f]
@@ -18,7 +19,7 @@
   [["-d" "--dir  DIR" "Directory"
     :desc "Directory to save downloads."
     :parse-fn #(String. %)]
-   ["-p" "--url  URL" "URL"
+   ["-u" "--url  URL" "URL"
     :desc "URL of the ontology to fetch."
     :parse-fn #(String. %)]
    ["-z" "--zip" "Zip Results"
@@ -70,7 +71,8 @@
 
 (defn -main
   [& args]
-  (let [{:keys [action opts exit-msg ok?]} (validate-args args)]
+  (let [start (t/local-now)        ;; As DateTime object
+        {:keys [action opts exit-msg ok?]} (validate-args args)]
     ;; If validate returned msg, return msg to user
     (if exit-msg
       (exit
@@ -84,7 +86,7 @@
           ;; Download the ontology to created dir
           (h/fetch-ontology! filepath (last redirs))
           ;; Do all the stuff - successful if it returns true
-          (if (true? (parse-ontology redirs dir filepath))
+          (if (true? (parse-ontology redirs dir filepath start))
             (do
               ;; Zip directory if user provided flag
               (if zip

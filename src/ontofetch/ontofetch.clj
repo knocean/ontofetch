@@ -26,7 +26,7 @@
   "Given redirects to an ontology, a directory that it was downloaded
    in, and the ontology filepath, get metadata and generate by parsing
    XML. And more..."
-  [redirs dir filepath]
+  [redirs dir filepath start]
   ;; Parse XML, then get the RDF node, the metadata node,
   ;; and a list of imports
   (let [xml (xml/parse-xml filepath)
@@ -51,7 +51,8 @@
         redirs
         [(xml/get-ontology-iri md)
          (xml/get-version-iri md)
-         i-map])
+         i-map]
+        start)
        ;; Catalog for protege
        (if-not (empty? imports)
          (xml/catalog-v001 i-map))))))
@@ -60,7 +61,7 @@
   "Given redirects to an ontology, a directory that it was downloaded
    in, and the ontology filepath, read the triples to get the
    metadata. And more..."
-  [redirs dir filepath]
+  [redirs dir filepath start]
   ;; Get the triples and prefixes
   (let [ttl (jena/read-triples filepath)
         trps (second ttl)]
@@ -87,7 +88,8 @@
           redirs
           [(jena/get-ontology-iri trps)
            (jena/get-version-iri trps)
-           i-map])
+           i-map]
+          start)
          ;; Catalog for protege
          (if-not (empty? imports)
            (xml/catalog-v001 i-map)))))))
@@ -96,7 +98,7 @@
   "Given redirects to an ontology, a directory that it was downloaded
    in, and the ontology filepath, use OWLAPI to parse the ontology.
    And more..."
-  [redirs dir filepath]
+  [redirs dir filepath start]
   ;; Get the ontology as an OWLOntology
   (let [owl-ont (owl/load-ontology filepath)]
     ;; Get a list of the imports
@@ -123,20 +125,21 @@
          (u/map-request
           filepath
           redirs
-          [iri version i-map])
+          [iri version i-map]
+          start)
          ;; Catalog for protege
          (if-not (empty? imports)
            (xml/catalog-v001 i-map)))))))
 
 (defn parse-ontology
-  [redirs dir filepath]
+  [redirs dir filepath start]
   (try
-    (try-xml redirs dir filepath)
+    (try-xml redirs dir filepath start)
     (catch Exception e
       (try
-        (try-jena redirs dir filepath)
+        (try-jena redirs dir filepath start)
         (catch Exception e
           (try
-            (try-owl redirs dir filepath)
+            (try-owl redirs dir filepath start)
             (catch Exception e
               (.getMessage e))))))))

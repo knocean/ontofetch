@@ -15,11 +15,11 @@
    as long as imports exists."
   [imports]
   (if-not (empty? imports)
-    [:div "Imports: "
+    [:div [:b "Imports: "]
      (into [:ul]
            (for [[url indirects] imports]
              (into [:li url] (list-indirects indirects))))]
-    [:div "Imports: none" [:br] [:br]]))
+    [:div [:b "Imports: "] "none" [:br] [:br]]))
 
 (defn gen-entry
   "Generates HTML for each entry in the catalog"
@@ -29,16 +29,24 @@
     [:a {:href (:request-url catalog-entry)
          :target "_blank"}
      (:request-url catalog-entry)]
-    (str " on " (:request-date catalog-entry))]
-   (if-let [v (get-in catalog-entry [:metadata :version-iri])]
-     (str "Version: " (get-in catalog-entry [:metadata :version-iri]))
-     "Version: undefined")
+    (str
+     " on "
+     (first 
+      (clojure.string/split (:start-time catalog-entry) #"\.")))]
+   [:b "Operation Time: "]
+   (str (:duration catalog-entry) " ms")
    [:br]
-   "Location: " [:a {:href (:location catalog-entry)
-                     :target "_blank"}
-                 (:location catalog-entry)]
+   [:b "Version: "]
+   (if-let [v (get-in catalog-entry [:metadata :version-iri])]
+     (get-in catalog-entry [:metadata :version-iri])
+     "undefined")
+   [:br]
+   [:b "Location: "] [:a {:href (:location catalog-entry)
+                          :target "_blank"}
+                      (:location catalog-entry)]
    [:br]
    (list-imports (get-in catalog-entry [:metadata :imports]))])
+   
 
 (defn gen-html
   "Generates a full HTML report of all requests."

@@ -1,8 +1,11 @@
 (ns ontofetch.tools.utils
   (:require
-   [clojure.string :as s]))
+   [clojure.string :as s]
+   [clj-time.core :as t]
+   [clj-time.format :as tf]
+   [clj-time.local :as tl]))
 
-;; Helper functions!
+
 
 (defn map-metadata
   "Given a vector containing [ontology-iri version-iri imports],
@@ -12,18 +15,22 @@
    :version-iri (second metadata)
    :imports (last metadata)})
 
+(defn get-duration
+  [times]
+  (t/in-seconds (t/interval)))
+
 (defn map-request
   "Returns a map of the request details for a given ontology."
-  [filepath redirs metadata]
-  {:request-url (first redirs),
-   :directory (first (s/split filepath #"/")),
-   :request-date
-   (.format
-    (java.text.SimpleDateFormat. "yyyy-MM-dd HH:mm:ss")
-    (java.util.Date.)),
-   :location filepath,
-   :redirect-path redirs,
-   :metadata (map-metadata metadata)})
+  [filepath redirs metadata start]
+  (let [end (tl/local-now)]
+    {:request-url (first redirs),
+     :directory (first (s/split filepath #"/")),
+     :location filepath,
+     :redirect-path redirs,
+     :start-time (.toString start),
+     :end-time (.toString end),
+     :duration (t/in-millis (t/interval start end)),
+     :metadata (map-metadata metadata)}))
 
 (defn path-from-url
   "Creates a filepath from a directory and a url,

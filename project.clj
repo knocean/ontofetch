@@ -3,7 +3,8 @@
   :url "https://github.com/knocean/ontofetch"
   :license {:name "BSD 3-Clause License"
             :url "https://opensource.org/licenses/BSD-3-Clause"}
-  :dependencies [[clojure-tools "1.1.3"]
+  :dependencies [[clj-time "0.14.2"]
+           [clojure-tools "1.1.3"]
            [hiccup "1.0.5"]
            [http-kit "2.1.18"]
            [net.sourceforge.owlapi/owlapi-distribution "5.1.0"]

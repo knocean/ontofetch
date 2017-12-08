@@ -122,7 +122,7 @@
 
 (deftest test-xml
   (is (= test-catalog-v001 (catalog-v001 i-map)))
-  (is (= rdf-node-owl test-rdf-node-obo))
+  ;;(is (= rdf-node-owl test-rdf-node-obo))
   (is (= rdf-node-owl test-rdf-node-owl))
   (is (= rdf-node-ttl test-rdf-node-ttl))
   (is (= rdf-node-xml test-rdf-node-xml)))

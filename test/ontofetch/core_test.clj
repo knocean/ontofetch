@@ -5,8 +5,8 @@
 
 (def summary
   (str
-   "  -d, --dir  DIR   Directory to save downloads."
-   "\n  -p, --url  URL  URL of the ontology to download."
+   "  -d, --dir  DIR  Directory to save downloads."
+   "\n  -u, --url  URL  URL of the ontology to fetch."
    "\n  -z, --zip       Compress the results."
    "\n  -h, --help"))
 
