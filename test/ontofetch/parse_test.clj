@@ -11,8 +11,7 @@
 (def xml-dir (str dir "/xml"))
 (def file "/test-1.owl")
 (def file-ttl "/test-1.ttl")
-(def file-2 "/test-3.owl")
-(def file-ttl-2 "/test-3.ttl")
+(def file-obo "/test-1.obo")
 
 ;; ------------------------- ONTOFETCH.JENA --------------------------
 ;; Prepare for use in XML test
@@ -28,6 +27,18 @@
 
 ;; -------------------------- ONTOFETCH.OWL --------------------------
 ;; Prepare for use in XML test
+(def test-rdf-node-obo
+  (let [iri "http://test.com/resources/test-1.owl"
+        version "http://test.com/resources/2017/test-1.owl"
+        owl-ont (owl/load-ontology (str owl-dir file-obo))
+        imports (owl/get-imports owl-ont)
+        annotations (owl/get-annotations owl-ont)]
+    (clojure.string/replace
+     (node->xml-str
+      (owl/map-rdf-node iri annotations)
+      (owl/map-metadata iri version imports annotations))
+     "\n" "")))
+
 (def test-rdf-node-owl
   (let [iri "http://test.com/resources/test-1.owl"
         version "http://test.com/resources/2017/test-1.owl"
@@ -111,6 +122,7 @@
 
 (deftest test-xml
   (is (= test-catalog-v001 (catalog-v001 i-map)))
+  (is (= rdf-node-owl test-rdf-node-obo))
   (is (= rdf-node-owl test-rdf-node-owl))
   (is (= rdf-node-ttl test-rdf-node-ttl))
   (is (= rdf-node-xml test-rdf-node-xml)))

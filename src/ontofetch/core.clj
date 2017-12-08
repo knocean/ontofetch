@@ -18,8 +18,8 @@
   [["-d" "--dir  DIR" "Directory"
     :desc "Directory to save downloads."
     :parse-fn #(String. %)]
-   ["-p" "--purl PURL" "PURL"
-    :desc "PURL of the ontology to download."
+   ["-p" "--url  URL" "URL"
+    :desc "URL of the ontology to fetch."
     :parse-fn #(String. %)]
    ["-z" "--zip" "Zip Results"
     :desc "Compress the results."
@@ -78,9 +78,9 @@
        (if ok? 0 1)
        exit-msg)
       ;; No exit msg, get parsed options
-      (let [{:keys [dir purl zip]} opts]
-        (let [redirs (h/get-redirects purl)
-              filepath (u/get-path-from-purl (f/make-dir! dir) purl)]
+      (let [{:keys [dir url zip]} opts]
+        (let [redirs (h/get-redirects url)
+              filepath (u/path-from-url (f/make-dir! dir) url)]
           ;; Download the ontology to created dir
           (h/fetch-ontology! filepath (last redirs))
           ;; Do all the stuff - successful if it returns true
@@ -90,4 +90,4 @@
               (if zip
                 (f/zip-folder! dir))
               (exit 0))
-            (exit 1 (str "Unable to fetch " purl))))))))
+            (exit 1 (str "Unable to fetch " url))))))))

@@ -56,7 +56,7 @@
   [imports dir]
   (reduce
    (fn [m i]
-     (let [ont (load-ontology (u/get-path-from-purl dir i))]
+     (let [ont (load-ontology (u/path-from-url dir i))]
        (conj m {i (get-imports ont)})))
    {} imports))
 

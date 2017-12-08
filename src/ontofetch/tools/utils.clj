@@ -25,9 +25,9 @@
    :redirect-path redirs,
    :metadata (map-metadata metadata)})
 
-(defn get-path-from-purl
-  "Creates a filepath from a directory and a purl,
-   giving the file the same name as the purl."
+(defn path-from-url
+  "Creates a filepath from a directory and a url,
+   giving the file the same name as the url."
   [dir url]
   (str dir "/" (last (s/split url #"/"))))
 

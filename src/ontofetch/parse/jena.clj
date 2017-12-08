@@ -141,7 +141,7 @@
   [imports dir]
   (reduce
    (fn [m i]
-     (let [trps (second (read-triples (u/get-path-from-purl dir i)))]
+     (let [trps (second (read-triples (u/path-from-url dir i)))]
        (conj m {i (get-imports trps)})))
    {} imports))
 

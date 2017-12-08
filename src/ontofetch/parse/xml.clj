@@ -94,7 +94,7 @@
   [imports dir]
   (reduce
    (fn [m i]
-     (let [f (u/get-path-from-purl dir i)]
+     (let [f (u/path-from-url dir i)]
        (if (.exists (io/as-file f))
          (conj m {i (get-imports (get-metadata-node (parse-xml f)))})
          m)))

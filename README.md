@@ -20,11 +20,11 @@ You can also rebuild just by running `lein bin` in the main directory (see [lein
 
 ontofetch only accepts options at this time (no args):
 
-	$ ./ontofetch --dir obi --purl http://purl.obolibrary.org/obo/obi.owl
+	$ ./ontofetch --dir obi --url http://purl.obolibrary.org/obo/obi.owl
     
 (You can compress the created directory by adding a `--zip` flag)
 
-This will create a directory 'obi'\* and download the ontology at the given PURL to it. The following files are also generated:
+This will create a directory 'obi'\* and download the ontology at the given URL to it. The following files are also generated:
   * `obi-element.owl` - XML output of just the owl:Ontology element
   * `catalog-v001.xml` - allows Protègè to load local import files\*\*
   * `catalog.edn` - a running report of all ontofetch operations made in that directory

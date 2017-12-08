@@ -6,14 +6,14 @@
 (def summary
   (str
    "  -d, --dir  DIR   Directory to save downloads."
-   "\n  -p, --purl PURL  PURL of the ontology to download."
-   "\n  -z, --zip        Compress the results."
+   "\n  -p, --url  URL  URL of the ontology to download."
+   "\n  -z, --zip       Compress the results."
    "\n  -h, --help"))
 
-(def input ["--dir" "d" "--purl" "p" "--zip"])
+(def input ["--dir" "d" "--url" "u" "--zip"])
 
 (def valid-return
-  {:opts {:dir "d" :purl "p" :zip true}})
+  {:opts {:dir "d" :url "u" :zip true}})
 
 (def help ["--help"])
 

@@ -59,7 +59,7 @@
       ;; Try to get the redirects
       (if-let [url (last (get-redirects (first is)))]
         (do
-          (fetch-ontology! (u/get-path-from-purl dir (first is)) url)
+          (fetch-ontology! (u/path-from-url dir (first is)) url)
           (if-not (empty? (rest is))
             (recur (rest is) (+ n 1))))
         ;; If not redirs, import cannot be fetched
