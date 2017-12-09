@@ -26,7 +26,7 @@
   "Given redirects to an ontology, a directory that it was downloaded
    in, and the ontology filepath, get metadata and generate by parsing
    XML. And more..."
-  [redirs dir filepath start]
+  [response dir filepath start]
   ;; Parse XML, then get the RDF node, the metadata node,
   ;; and a list of imports
   (let [xml (xml/parse-xml filepath)
@@ -48,7 +48,7 @@
        ;; Formatted metadata map
        (u/map-request
         filepath
-        redirs
+        response
         [(xml/get-ontology-iri md)
          (xml/get-version-iri md)
          i-map]
@@ -61,7 +61,7 @@
   "Given redirects to an ontology, a directory that it was downloaded
    in, and the ontology filepath, read the triples to get the
    metadata. And more..."
-  [redirs dir filepath start]
+  [response dir filepath start]
   ;; Get the triples and prefixes
   (let [ttl (jena/read-triples filepath)
         trps (second ttl)]
@@ -70,7 +70,7 @@
      dir
      (xml/node->xml-str
       (jena/map-rdf-node ttl)
-      (jena/map-metadata (first redirs) ttl)))
+      (jena/map-metadata (first (:redirs response)) ttl)))
     ;; Get a list of the imports
     (let [imports (jena/get-imports trps)]
       ;; Download the direct imports
@@ -85,7 +85,7 @@
          ;; Formatted metadata map
          (u/map-request
           filepath
-          redirs
+          response
           [(jena/get-ontology-iri trps)
            (jena/get-version-iri trps)
            i-map]
@@ -98,7 +98,7 @@
   "Given redirects to an ontology, a directory that it was downloaded
    in, and the ontology filepath, use OWLAPI to parse the ontology.
    And more..."
-  [redirs dir filepath start]
+  [response dir filepath start]
   ;; Get the ontology as an OWLOntology
   (let [owl-ont (owl/load-ontology filepath)]
     ;; Get a list of the imports
@@ -113,10 +113,12 @@
         (owl/map-rdf-node iri annotations)
         (owl/map-metadata iri version imports annotations)))
       ;; Download the direct imports
+      ;; TODO: Maybe don't download if-not (:update? response)
       (h/fetch-imports! dir imports)
       ;; Get a map of direct imports (key) & indirect imports (vals)
       (let [i-map (try-get-imports imports dir)]
         ;; Download the indirect imports
+        ;; TODO: Maybe don't download if-not (:update? response)
         (for [indirs (vals i-map)]
           ((partial h/fetch-imports! dir) indirs))
         (f/gen-content!
@@ -124,7 +126,7 @@
          ;; Formatted metadata map
          (u/map-request
           filepath
-          redirs
+          response
           [iri version i-map]
           start)
          ;; Catalog for protege
@@ -132,14 +134,30 @@
            (xml/catalog-v001 i-map)))))))
 
 (defn parse-ontology
-  [redirs dir filepath start]
+  [response dir filepath start]
   (try
-    (try-xml redirs dir filepath start)
+    (try-xml response dir filepath start)
     (catch Exception e
       (try
-        (try-jena redirs dir filepath start)
+        (try-jena response dir filepath start)
         (catch Exception e
           (try
-            (try-owl redirs dir filepath start)
+            (try-owl response dir filepath start)
             (catch Exception e
               (.getMessage e))))))))
+
+(defn ontofetch
+  [dir url start]
+  (let [response (h/get-redirects url)
+        filepath (u/path-from-url (f/make-dir! dir) url)]
+    ;; Check the version (if it's been updated)
+    ;; and that the file exists - don't need to re-download
+    (if-not
+      (and
+        (f/same-version? url response) 
+        (f/file-exists? dir url))
+      ;; If either is false, download it...
+      (h/fetch-ontology! filepath (last (:redirs response)))
+      (println (str filepath " is up-to-date.")))
+    ;; Do all the stuff & hopefully return true
+    (parse-ontology response dir filepath start)))

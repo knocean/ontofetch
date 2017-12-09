@@ -5,8 +5,6 @@
    [clj-time.format :as tf]
    [clj-time.local :as tl]))
 
-
-
 (defn map-metadata
   "Given a vector containing [ontology-iri version-iri imports],
    return a map."
@@ -21,12 +19,12 @@
 
 (defn map-request
   "Returns a map of the request details for a given ontology."
-  [filepath redirs metadata start]
+  [filepath response metadata start]
   (let [end (tl/local-now)]
-    {:request-url (first redirs),
+    {:request-url (first (:redirs response)),
      :directory (first (s/split filepath #"/")),
      :location filepath,
-     :redirect-path redirs,
+     :response response,
      :start-time (.toString start),
      :end-time (.toString end),
      :duration (t/in-millis (t/interval start end)),

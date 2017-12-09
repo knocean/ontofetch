@@ -5,9 +5,7 @@
    [clj-time.local :as t]
    [clojure.string :as s]
    [clojure.tools.cli :refer [parse-opts]]
-   [ontofetch.tools.files :as f]
-   [ontofetch.tools.http :as h]
-   [ontofetch.tools.utils :as u])
+   [ontofetch.tools.files :as f])
   (:gen-class))
 
 ;; TODO: General error handling (error logs)
@@ -81,15 +79,10 @@
        exit-msg)
       ;; No exit msg, get parsed options
       (let [{:keys [dir url zip]} opts]
-        (let [redirs (h/get-redirects url)
-              filepath (u/path-from-url (f/make-dir! dir) url)]
-          ;; Download the ontology to created dir
-          (h/fetch-ontology! filepath (last redirs))
-          ;; Do all the stuff - successful if it returns true
-          (if (true? (parse-ontology redirs dir filepath start))
-            (do
-              ;; Zip directory if user provided flag
-              (if zip
-                (f/zip-folder! dir))
-              (exit 0))
-            (exit 1 (str "Unable to fetch " url))))))))
+        (if (true? (ontofetch dir url start))
+          (do
+            ;; Zip directory if user provided flag
+            (if zip
+              (f/zip! dir))
+            (exit 0))
+          (exit 1 (str "Unable to fetch " url)))))))

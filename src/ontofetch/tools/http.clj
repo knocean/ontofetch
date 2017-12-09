@@ -28,12 +28,16 @@
     (if (.contains new-url "ftp://")
       (conj redirs new-url)
       ;; Otherwise get HTTP status and determine what to do
-      (let [{:keys [status headers body error]
+      (let [{:keys [status headers]
              :as res} @(http/request {:url new-url
                                       :method :head
                                       :follow-redirects false})]
         (case status
-          200 (conj redirs new-url)
+          200
+          {:redirs (conj redirs new-url)
+           ;; Also get ETag and Last-Modified
+           :etag (:etag headers)
+           :last-modified (:last-modified headers)}
           (301 302 303 307 308)
           (recur (conj redirs new-url) (:location headers))
           nil)))))       ;; Anthing else will not be returned

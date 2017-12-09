@@ -7,7 +7,7 @@
    [ontofetch.parse.xml :as xml]
    [ontofetch.tools.html :as h])
   (:import
-   [java.util.zip ZipEntry ZipOutputStream]))
+   [java.util.zip ZipEntry ZipOutputStream ZipInputStream]))
 
 (def +catalog+ "catalog.edn")
 (def +report+ "report.html")
@@ -34,6 +34,63 @@
       ["    </owl:Ontology>"
        "</rdf:RDF>"]))))
 
+(defn same-version?
+  "Given a request URL and response headers (ETag, Last-Modified),
+   check if the catalog has data on the same version already.
+   Return true if so."
+  [url response]
+  ;; Filter the most recent request for this URL
+  (if-let [e (->> @catalog
+                  (filter #(= (:request-url %) url))
+                  last
+                  :response)] 
+    (if-not (nil? (:etag response))
+      ;; Compare the existing ETag to new ETag
+      (= (:etag e) (:etag response))
+      (if-not (nil? (:last-modified response))
+        ;; Compare modification dates
+        (= (:last-modified e) (:last-modified response))))))
+
+(defn unzip!
+  "Given the path to a zip file, unzip all contents."
+  [zip]
+  ;; Open a stream
+  (with-open [s (-> zip
+                    (io/as-file)
+                    (io/input-stream)
+                    (java.util.zip.ZipInputStream.))]
+    ;; Loop over stream
+    (loop [p (.getName (.getNextEntry s))]
+      ;; Folder should exist, but just in case...
+      (io/make-parents p)
+      (io/copy s (io/as-file p))
+      (if-let [n (.getNextEntry s)]
+        ;; Keep going if there's a next entry
+        (recur (.getName n))
+        ;; Otherwise delete the zip and return true
+        (do
+          (io/delete-file zip) 
+          true)))))
+
+(defn file-exists?
+  "Given a directory name and a request URL,
+   check if the download already exists in that directory.
+   If it doesn't, check if the zip exists, and unzip it if so.
+   Otherwise, returns false."
+  [dir url]
+  ;; Check if the file exists
+  (if 
+    (.exists 
+      (io/as-file (ontofetch.tools.utils/path-from-url dir url)))
+    true
+    ;; Check if the folder has been zipped
+    (if (.exists (io/as-file (str dir ".zip")))
+      (do
+        ;; Unzip it, and then make sure the file is in there
+        (unzip! (str dir ".zip"))
+        (recur dir url))
+      false)))
+
 ;;----------------------------- FOLDERS ------------------------------
 
 (defn valid-dir?
@@ -45,21 +102,18 @@
      (Exception.
       (str "Directory name can only include letters, numbers,"
            " or underscores."))))
-  (when (.isDirectory (io/file dir))
-    (throw
-     (Exception.
-      "Directory must not already exist in the file system.")))
   true)
 
 (defn make-dir!
   "Given a directory name, checks if it is a valid dir name,
    then makes a new directory & returns the name."
   [dir]
-  (if (valid-dir? dir)
+  ;; If it already exists, we don't need to make it again
+  (if (and (valid-dir? dir) (not (.isDirectory (io/file dir)))) 
     (.mkdir (java.io.File. dir)))
   dir)
 
-(defn zip-folder!
+(defn zip!
   "Given a directory name, compress that directory
    and delete the original."
   [dir]
