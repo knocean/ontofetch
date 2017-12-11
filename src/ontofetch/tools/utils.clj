@@ -22,7 +22,8 @@
   [filepath response metadata start]
   (let [end (tl/local-now)]
     {:request-url (first (:redirs response)),
-     :directory (first (s/split filepath #"/")),
+     :directory
+     (subs filepath 0 (s/last-index-of filepath "/")),
      :location filepath,
      :response response,
      :start-time (.toString start),

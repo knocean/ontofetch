@@ -18,7 +18,7 @@
   [url ms & body]
   `(invoke-timeout ~url (fn [] ~@body) ~ms))
 
-(defn get-redirects
+(defn get-response
   "Manually follows redirects and returns a vector containing all
    redirect URLs. The final URL with content is the last entry."
   [url]
@@ -61,7 +61,7 @@
          n 0]
     (if (< n (count imports))
       ;; Try to get the redirects
-      (if-let [url (last (get-redirects (first is)))]
+      (if-let [url (last (:redirs (get-response (first is))))]
         (do
           (fetch-ontology! (u/path-from-url dir (first is)) url)
           (if-not (empty? (rest is))

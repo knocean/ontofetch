@@ -31,7 +31,7 @@
      (:request-url catalog-entry)]
     (str
      " on "
-     (first 
+     (first
       (clojure.string/split (:start-time catalog-entry) #"\.")))]
    [:b "Operation Time: "]
    (str (:duration catalog-entry) " ms")
@@ -46,7 +46,6 @@
                       (:location catalog-entry)]
    [:br]
    (list-imports (get-in catalog-entry [:metadata :imports]))])
-   
 
 (defn gen-html
   "Generates a full HTML report of all requests."

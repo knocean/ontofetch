@@ -14,9 +14,13 @@
   "ftp://ftp.proconsortium.org/databases/ontology/pro_obo/pro_reasoned.owl")
 ;; Get last from redirects
 (def test-bfo
-  (last (get-redirects "http://purl.obolibrary.org/obo/bfo.owl")))
+  (last
+   (:redirs
+    (get-response "http://purl.obolibrary.org/obo/bfo.owl"))))
 (def test-pr
-  (last (get-redirects "http://purl.obolibrary.org/obo/pr.owl")))
+  (last
+   (:redirs
+    (get-response "http://purl.obolibrary.org/obo/pr.owl"))))
 
 ;; Run fetch, delete file, and return (hopefully) true
 (def fetch-bfo

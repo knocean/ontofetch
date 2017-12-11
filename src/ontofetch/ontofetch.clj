@@ -34,6 +34,8 @@
         md (xml/get-metadata-node xml)
         imports (xml/get-imports md)]
     ;; Create an XML file with just the Ontology element
+    ;; Placed in the current dir, or project dir if specified
+    ;; TODO: Split into separate subcommand
     (f/spit-ont-element! dir (f/extract-element filepath))
     ;; Download the direct imports
     (h/fetch-imports! dir imports)
@@ -66,6 +68,7 @@
   (let [ttl (jena/read-triples filepath)
         trps (second ttl)]
     ;; Generate the ontology element as XML
+    ;; Placed in the current dir, or project dir if specified
     (f/spit-ont-element!
      dir
      (xml/node->xml-str
@@ -107,6 +110,7 @@
           imports (owl/get-imports owl-ont)
           annotations (owl/get-annotations owl-ont)]
       ;; Generate the ontology element as XML
+      ;; Placed in the current dir, or project dir if specified
       (f/spit-ont-element!
        dir
        (xml/node->xml-str
@@ -138,26 +142,45 @@
   (try
     (try-xml response dir filepath start)
     (catch Exception e
-      (try
-        (try-jena response dir filepath start)
-        (catch Exception e
-          (try
-            (try-owl response dir filepath start)
-            (catch Exception e
-              (.getMessage e))))))))
+      (do
+        (println e)
+        (try
+          (try-jena response dir filepath start)
+          (catch Exception e
+            (try
+              (try-owl response dir filepath start)
+              (catch Exception e
+                (.getMessage e)))))))))
+
+(defn skip-fetch
+  [dir last-request response start]
+  ;; Only delete if the dir is emtpy
+  (if (empty? (file-seq (clojure.java.io/as-file dir)))
+    (clojure.java.io/delete-file dir))
+  (f/gen-content!
+   dir
+   ;; Use the same metadata, since nothing changed
+   (u/map-request
+    (:location last-request)
+    (assoc response :update? false)
+    [(:ontology-iri last-request)
+     (:version-iri last-request)
+     (:imports last-request)]
+    start)
+   nil))
 
 (defn ontofetch
   [dir url start]
-  (let [response (h/get-redirects url)
-        filepath (u/path-from-url (f/make-dir! dir) url)]
-    ;; Check the version (if it's been updated)
-    ;; and that the file exists - don't need to re-download
-    (if-not
-      (and
-        (f/same-version? url response) 
-        (f/file-exists? dir url))
-      ;; If either is false, download it...
-      (h/fetch-ontology! filepath (last (:redirs response)))
-      (println (str filepath " is up-to-date.")))
-    ;; Do all the stuff & hopefully return true
-    (parse-ontology response dir filepath start)))
+  (let [response (h/get-response url)
+        filepath (u/path-from-url dir url)]
+    ;; Make sure the parent directories exist
+    (f/make-dir! dir filepath)
+    ;; If the version is the same as last request, get details
+    (if-let [last-request (f/get-last-metadata url response)]
+      (skip-fetch dir last-request response start)
+      ;; Or download it if it's a new version...
+      (do
+        (h/fetch-ontology! filepath (last (:redirs response)))
+        ;; Do all the stuff & hopefully return true
+        (parse-ontology
+         (assoc response :update? true) dir filepath start)))))

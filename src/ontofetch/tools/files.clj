@@ -34,23 +34,30 @@
       ["    </owl:Ontology>"
        "</rdf:RDF>"]))))
 
-(defn same-version?
+(defn get-last-metadata
   "Given a request URL and response headers (ETag, Last-Modified),
    check if the catalog has data on the same version already.
-   Return true if so."
+   If so, return that request's metadata, otherwise return nil."
   [url response]
   ;; Filter the most recent request for this URL
   (if-let [e (->> @catalog
                   (filter #(= (:request-url %) url))
-                  last
-                  :response)] 
+                  last)]
     (if-not (nil? (:etag response))
       ;; Compare the existing ETag to new ETag
-      (= (:etag e) (:etag response))
+      (if (= (get-in e [:response :etag]) (:etag response))
+        ;; If the same, get details (metadata & location)
+        (assoc (:metadata e) :location (:location e)))
       (if-not (nil? (:last-modified response))
         ;; Compare modification dates
-        (= (:last-modified e) (:last-modified response))))))
+        (if
+         (=
+          (get-in e [:response :last-modified])
+          (:last-modified response))
+          ;; If the same, get details (metadata & location)
+          (assoc (:metadata e) :location (:location e)))))))
 
+;; TODO: Unused. Might need this later.
 (defn unzip!
   "Given the path to a zip file, unzip all contents."
   [zip]
@@ -69,27 +76,8 @@
         (recur (.getName n))
         ;; Otherwise delete the zip and return true
         (do
-          (io/delete-file zip) 
+          (io/delete-file zip)
           true)))))
-
-(defn file-exists?
-  "Given a directory name and a request URL,
-   check if the download already exists in that directory.
-   If it doesn't, check if the zip exists, and unzip it if so.
-   Otherwise, returns false."
-  [dir url]
-  ;; Check if the file exists
-  (if 
-    (.exists 
-      (io/as-file (ontofetch.tools.utils/path-from-url dir url)))
-    true
-    ;; Check if the folder has been zipped
-    (if (.exists (io/as-file (str dir ".zip")))
-      (do
-        ;; Unzip it, and then make sure the file is in there
-        (unzip! (str dir ".zip"))
-        (recur dir url))
-      false)))
 
 ;;----------------------------- FOLDERS ------------------------------
 
@@ -107,18 +95,20 @@
 (defn make-dir!
   "Given a directory name, checks if it is a valid dir name,
    then makes a new directory & returns the name."
-  [dir]
+  [dir filepath]
   ;; If it already exists, we don't need to make it again
-  (if (and (valid-dir? dir) (not (.isDirectory (io/file dir)))) 
-    (.mkdir (java.io.File. dir)))
-  dir)
+  (if (and (valid-dir? dir) (not (.isDirectory (io/file dir))))
+    (io/make-parents filepath)
+    dir))
 
 (defn zip!
   "Given a directory name, compress that directory
    and delete the original."
   [dir]
+  ;; TODO: Put zips in project dir if specified
   (with-open [zip (ZipOutputStream.
-                   (io/output-stream (str dir ".zip")))]
+                   (io/output-stream
+                    (str dir ".zip")))]
     (doseq [f (file-seq (io/file dir)) :when (.isFile f)]
       (.putNextEntry zip (ZipEntry. (.getPath f)))
       (io/copy f zip)
@@ -141,10 +131,17 @@
     (spit filepath catalog-v001)))
 
 (defn spit-ont-element!
-  "Given a directory and the XML string of the ontology element,
-   spit the file as [dir]-element.owl."
+  "Given a directory path (project/directory) and the XML string of
+   the ontology element, spit the file as [project]-element.owl. If
+   no project is specified, the file will be [dir]-element.owl."
   [dir ont-element]
-  (spit (str dir "-element.owl") ont-element))
+  (if (s/includes? dir "/")
+    ;; If there is a project name specified, use that as the filename
+    (->> ont-element
+         (spit (str (first (s/split dir #"/")) "-element.owl")))
+    ;; Otherwise, use the dir name (./dir)
+    (->> ont-element
+         (spit (str dir "-element.owl")))))
 
 (defn update-catalog!
   "Given a map of request details, add the details to the catalog atom
@@ -157,5 +154,6 @@
   "Do a bunch of stuff."
   [dir request-details catalog-v001]
   (update-catalog! request-details)
-  (spit-catalog-v001! dir catalog-v001)
+  (if-not (nil? catalog-v001)
+    (spit-catalog-v001! dir catalog-v001))
   (spit-report!))
