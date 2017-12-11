@@ -10,6 +10,8 @@
 
 ;; TODO: Divide up methods to create different CLI args?
 
+(def catalog (atom []))
+
 (defn try-get-imports
   "Given a list of imports and the directory they are saved in,
    try to get their indirect imports (XML, jena, or OWLAPI)."
@@ -48,14 +50,16 @@
       ;; Generate content
       (f/gen-content!
        dir
-       ;; Formatted metadata map
-       (u/map-request
-        filepath
-        response
-        [(xml/get-ontology-iri md)
-         (xml/get-version-iri md)
-         i-map]
-        start)
+       (conj
+        @catalog
+         ;; Formatted metadata map
+        (u/map-request
+         filepath
+         response
+         [(xml/get-ontology-iri md)
+          (xml/get-version-iri md)
+          i-map]
+         start))
        ;; Catalog for protege
        (if-not (empty? imports)
          (xml/catalog-v001 i-map))))))
@@ -86,14 +90,16 @@
           ((partial h/fetch-imports! dir) indirs))
         (f/gen-content!
          dir
-         ;; Formatted metadata map
-         (u/map-request
-          filepath
-          response
-          [(jena/get-ontology-iri trps)
-           (jena/get-version-iri trps)
-           i-map]
-          start)
+         (conj
+          @catalog
+           ;; Formatted metadata map
+          (u/map-request
+           filepath
+           response
+           [(jena/get-ontology-iri trps)
+            (jena/get-version-iri trps)
+            i-map]
+           start))
          ;; Catalog for protege
          (if-not (empty? imports)
            (xml/catalog-v001 i-map)))))))
@@ -128,12 +134,14 @@
           ((partial h/fetch-imports! dir) indirs))
         (f/gen-content!
          dir
-         ;; Formatted metadata map
-         (u/map-request
-          filepath
-          response
-          [iri version i-map]
-          start)
+         (conj
+          @catalog
+           ;; Formatted metadata map
+          (u/map-request
+           filepath
+           response
+           [iri version i-map]
+           start))
          ;; Catalog for protege
          (if-not (empty? imports)
            (xml/catalog-v001 i-map)))))))
@@ -160,15 +168,28 @@
     (io/delete-file (io/file dir)))
   (f/gen-content!
    dir
-   ;; Use the same metadata, since nothing changed
-   (u/map-request
-    (:location last-request)
-    (assoc response :update? false)
-    [(:ontology-iri last-request)
-     (:version-iri last-request)
-     (:imports last-request)]
-    start)
+   (conj
+    @catalog
+     ;; Use the same metadata, since nothing changed
+    (u/map-request
+     (:location last-request)
+     (assoc response :update? false)
+     [(:ontology-iri last-request)
+      (:version-iri last-request)
+      (:imports last-request)]
+     start))
    nil))
+
+(defn swap-catalog
+  "Given a directory path, read the catalog of the working directory
+   (one level up) into the catalog atom."
+  [dir]
+  (swap! catalog
+   (fn [cur]
+     (if-let [cat (f/read-catalog
+                   (subs dir 0
+                         (+ 1 (clojure.string/index-of dir "/"))))]
+       (into cur cat)))))
 
 (defn ontofetch
   [dir url start]
@@ -176,10 +197,12 @@
         filepath (u/path-from-url dir url)]
     ;; Make sure the parent directories exist
     (f/make-dir! dir filepath)
+    ;; Read the catalog in working dir
+    (swap-catalog dir)
     ;; If the version is the same as last request, get details
-    (let [last-request (f/get-last-metadata url response)
+    (let [last-request (f/get-last-metadata catalog url response)
           last-loc (:location last-request)]
-      ;; Check if there's a last request, and also that the file exists
+      ;; Check if there's a last request, and also that file exists
       (if (or (= nil last-request) (not (f/file-exists? last-loc)))
         ;; Download it if it's a new version or the file is missing
         (do

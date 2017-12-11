@@ -19,7 +19,7 @@
 
 (def test-zip (zip! dir-2))
 (def test-exists
-  (let [res (file-exists? dir-2 "http://test.com/catalog-v001.xml")]
+  (let [res (file-exists? (str dir-2 "/catalog-v001.xml"))]
     (io/delete-file (io/as-file (str dir-2 ".zip")))
     res))
 

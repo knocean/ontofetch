@@ -20,10 +20,14 @@
    ["-u" "--url <arg>" "URL"
     :desc "URL of the ontology to fetch."
     :parse-fn #(String. %)]
-   ["-p" "--project <arg>" "Project name."
+   ["-p" "--project <arg>" "Project name"
     :desc "Parent directory for the project."
     :parse-fn #(str (String. %) "/")
     :default ""]
+   ["-w" "--working-dir <arg>" "Working Directory"
+    :desc "Working directory for all content."
+    :parse-fn #(str (String. %) "/")
+    :default "./"]
    ["-z" "--zip" "Zip Results"
     :desc "Compress the results."
     :default false]
@@ -82,10 +86,10 @@
        (if ok? 0 1)
        exit-msg)
       ;; No exit msg, get parsed options
-      (let [{:keys [dir url project zip]} opts]
-        (if (true? (ontofetch (str project dir) url start))
+      (let [{:keys [dir url project working-dir zip]} opts]
+        (if (true? (ontofetch (str working-dir project dir) url start))
           (do
             ;; Zip directory if user provided flag
-            (if zip (f/zip! (str project dir)))
+            (if zip (f/zip! (str working-dir project dir)))
             (exit 0))
           (exit 1 (str "Unable to fetch " url)))))))

@@ -12,11 +12,6 @@
 
 (def +catalog+ "catalog.edn")
 (def +report+ "report.html")
-(def catalog (atom
-              (if (.exists (io/as-file +catalog+))
-                (clojure.edn/read-string (slurp +catalog+))
-                [])))
-(def ont-elements "resources/elements/")
 
 ;;----------------------------- FOLDERS ------------------------------
 
@@ -77,6 +72,16 @@
 
 ;;----------------------------- READING ------------------------------
 
+(defn read-catalog
+  "Given a working directory path, read the catalog.edn contents.
+   If it does not exist, return empty vector."
+  [working-dir]
+  (let [cat (str working-dir +catalog+)]
+    (if (.exists (io/as-file cat))
+      (->> cat
+           slurp
+           clojure.edn/read-string))))
+
 (defn extract-element
   "Given the filepath to an RDF-XML format ontology,
    extract just the owl:Ontology element."
@@ -96,7 +101,7 @@
   "Given a request URL and response headers (ETag, Last-Modified),
    check if the catalog has data on the same version already.
    If so, return that request's metadata, otherwise return nil."
-  [url response]
+  [catalog url response]
   ;; Filter the most recent request for this URL
   (if-let [e (->> @catalog
                   (filter #(= (:request-url %) url))
@@ -114,13 +119,13 @@
           (assoc (:metadata e) :location (:location e)))))))
 
 (defn file-exists?
-  "Given a directory and a request URL, check if the download already
-   exists in that directory. If not, check if it has been zipped, 
-   unzip it, and check for the download. If not there, return false."
+  "Given a filepath, check if the download already exists. If not, 
+   check if it has been zipped, unzip it, and check for the download.
+   If not there, return false."
   [filepath]
   (if
-    (.exists
-      (io/as-file filepath))
+   (.exists
+    (io/as-file filepath))
     true
     ;; Check if the folder has been zipped
     (let [dir (subs filepath 0 (s/last-index-of filepath "/"))
@@ -139,9 +144,10 @@
 ;;----------------------------- OUTPUT -------------------------------
 
 (defn spit-report!
-  "Assuming a catalog atom exists, generate the HTML report."
-  []
-  (spit +report+ (h/gen-html @catalog))
+  "Given a working-dir and a vector of requests (catalog),
+   generate the HTML report."
+  [working-dir catalog-edn]
+  (spit (str working-dir +report+) (h/gen-html catalog-edn))
   true)
 
 (defn spit-catalog-v001!
@@ -156,25 +162,34 @@
    the ontology element, spit the file as [project]-element.owl. If
    no project is specified, the file will be [dir]-element.owl."
   [dir ont-element]
-  (if (s/includes? dir "/")
-    ;; If there is a project name specified, use that as the filename
-    (->> ont-element
-         (spit (str (first (s/split dir #"/")) "-element.owl")))
-    ;; Otherwise, use the dir name (./dir)
-    (->> ont-element
-         (spit (str dir "-element.owl")))))
+  (let [working-dir (subs dir 0 (+ 1 (s/index-of dir "/")))
+        f-path (subs dir (+ 1 (s/index-of dir "/")))]
+    (if (s/includes? f-path "/")
+      ;; If there is a project name specified, use that as filename
+      ;; Make sure it gets put in the working-dir
+      (->> ont-element
+           (spit
+            (str
+             working-dir
+             (first (s/split f-path #"/"))
+             "-element.owl")))
+      ;; Otherwise, use just the dir name
+      (->> ont-element
+           (spit (str working-dir f-path "-element.owl"))))))
 
 (defn update-catalog!
-  "Given a map of request details, add the details to the catalog atom
-   and write the catalog to current directory."
-  [request-details]
-  (swap! catalog (fn [cur] (conj cur request-details)))
-  (pp/pprint @catalog (io/writer +catalog+)))
+  "Given a working-dir and a vector of requests (catalog), update
+   catalog.edn with vector."
+  [working-dir catalog-edn]
+  (pp/pprint
+   catalog-edn
+   (io/writer (str working-dir +catalog+))))
 
 (defn gen-content!
   "Do a bunch of stuff."
-  [dir request-details catalog-v001]
-  (update-catalog! request-details)
-  (if-not (nil? catalog-v001)
-    (spit-catalog-v001! dir catalog-v001))
-  (spit-report!))
+  [dir catalog-edn catalog-v001]
+  (let [working-dir (str (first (s/split dir #"/")) "/")]
+    (update-catalog! working-dir catalog-edn)
+    (if-not (nil? catalog-v001)
+      (spit-catalog-v001! dir catalog-v001))
+    (spit-report! working-dir catalog-edn)))
