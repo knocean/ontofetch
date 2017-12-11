@@ -14,13 +14,13 @@
 ;; Look at obi-edit file (core.owl import not resolving)
 
 (def cli-options
-  [["-d" "--dir  DIR" "Directory"
+  [["-d" "--dir <arg>" "Directory"
     :desc "Directory to save downloads."
     :parse-fn #(String. %)]
-   ["-u" "--url  URL" "URL"
+   ["-u" "--url <arg>" "URL"
     :desc "URL of the ontology to fetch."
     :parse-fn #(String. %)]
-   ["-p" "--project  PROJECT" "Project name."
+   ["-p" "--project <arg>" "Project name."
     :desc "Parent directory for the project."
     :parse-fn #(str (String. %) "/")
     :default ""]

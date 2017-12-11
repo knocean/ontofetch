@@ -24,9 +24,9 @@
   [url]
   (loop [redirs []
          new-url url]
-    ;; No redirs from FTP, so that's final content
+    ;; No headers from FTP, so that's final content
     (if (.contains new-url "ftp://")
-      (conj redirs new-url)
+      {:redirs (conj redirs new-url)}
       ;; Otherwise get HTTP status and determine what to do
       (let [{:keys [status headers]
              :as res} @(http/request {:url new-url

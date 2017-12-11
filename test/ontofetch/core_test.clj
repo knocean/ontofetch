@@ -5,15 +5,16 @@
 
 (def summary
   (str
-   "  -d, --dir  DIR  Directory to save downloads."
-   "\n  -u, --url  URL  URL of the ontology to fetch."
-   "\n  -z, --zip       Compress the results."
-   "\n  -h, --help"))
+   "  -d, --dir <arg>        Directory to save downloads.\n"
+   "  -u, --url <arg>        URL of the ontology to fetch.\n"
+   "  -p, --project <arg>    Parent directory for the project.\n"
+   "  -z, --zip              Compress the results.\n"
+   "  -h, --help"))
 
-(def input ["--dir" "d" "--url" "u" "--zip"])
+(def input ["--dir" "d" "--url" "u" "--project" "p" "--zip"])
 
 (def valid-return
-  {:opts {:dir "d" :url "u" :zip true}})
+  {:opts {:dir "d" :url "u" :project "p/" :zip true}})
 
 (def help ["--help"])
 

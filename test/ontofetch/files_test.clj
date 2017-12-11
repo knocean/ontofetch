@@ -8,17 +8,19 @@
 
 ;; Invalid directories
 (def dir-1 "dir-1")
-(def dir-2 "test")
 ;; Valid directory
-(def dir-3 (str dir "/dir_3"))
+(def dir-2 (str dir "/dir_2"))
+(def fp (str dir-2 "/test.txt"))
 (def test-mkdir
   (do
-    (make-dir! dir-3)
-    (.exists (io/as-file dir-3))))
+    (make-dir! dir-2 fp)
+    (spit-catalog-v001! dir-2 "test")
+    (.exists (io/as-file (str dir-2 "/catalog-v001.xml")))))
 
-(def test-zip
-  (let [res (zip-folder! dir-3)]
-    (io/delete-file (str dir-3 ".zip"))
+(def test-zip (zip! dir-2))
+(def test-exists
+  (let [res (file-exists? dir-2 "http://test.com/catalog-v001.xml")]
+    (io/delete-file (io/as-file (str dir-2 ".zip")))
     res))
 
 (deftest test-files
@@ -26,11 +28,7 @@
    (thrown-with-msg?
     Exception
     #"Directory name can only include letters, numbers, or underscores."
-    (make-dir! dir-1)))
-  (is
-   (thrown-with-msg?
-    Exception
-    #"Directory must not already exist in the file system."
-    (make-dir! dir-2)))
+    (make-dir! dir-1 (str dir-1 fp))))
   (is (= true test-mkdir))
-  (is (= true test-zip)))
+  (is (= true test-zip))
+  (is (= true test-exists)))
