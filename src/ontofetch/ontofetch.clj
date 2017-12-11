@@ -1,5 +1,6 @@
 (ns ontofetch.ontofetch
   (:require
+   [clojure.java.io :as io]
    [ontofetch.parse.jena :as jena]
    [ontofetch.parse.owl :as owl]
    [ontofetch.parse.xml :as xml]
@@ -155,8 +156,8 @@
 (defn skip-fetch
   [dir last-request response start]
   ;; Only delete if the dir is emtpy
-  (if (empty? (file-seq (clojure.java.io/as-file dir)))
-    (clojure.java.io/delete-file dir))
+  (if (nil? (second (file-seq (io/file dir))))
+    (io/delete-file (io/file dir)))
   (f/gen-content!
    dir
    ;; Use the same metadata, since nothing changed
@@ -176,11 +177,16 @@
     ;; Make sure the parent directories exist
     (f/make-dir! dir filepath)
     ;; If the version is the same as last request, get details
-    (if-let [last-request (f/get-last-metadata url response)]
-      (skip-fetch dir last-request response start)
-      ;; Or download it if it's a new version...
-      (do
-        (h/fetch-ontology! filepath (last (:redirs response)))
-        ;; Do all the stuff & hopefully return true
-        (parse-ontology
-         (assoc response :update? true) dir filepath start)))))
+    (let [last-request (f/get-last-metadata url response)
+          last-loc (:location last-request)]
+      ;; Check if there's a last request, and also that the file exists
+      (if (or (= nil last-request) (not (f/file-exists? last-loc)))
+        ;; Download it if it's a new version or the file is missing
+        (do
+          (h/fetch-ontology! filepath (last (:redirs response)))
+          ;; Do all the stuff & hopefully return true
+          (parse-ontology
+           (assoc response :update? true) dir filepath start))
+        ;; Otherwise we can skip fetching
+        (skip-fetch dir last-request response start)))))
+        ;; TODO: Check imports for new version

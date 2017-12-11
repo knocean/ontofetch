@@ -5,7 +5,8 @@
    [clojure.string :as s]
    [clojure.tools.file-utils :as ctfu]
    [ontofetch.parse.xml :as xml]
-   [ontofetch.tools.html :as h])
+   [ontofetch.tools.html :as h]
+   [ontofetch.tools.utils :as u])
   (:import
    [java.util.zip ZipEntry ZipOutputStream ZipInputStream]))
 
@@ -16,68 +17,6 @@
                 (clojure.edn/read-string (slurp +catalog+))
                 [])))
 (def ont-elements "resources/elements/")
-
-;;----------------------------- READING ------------------------------
-
-(defn extract-element
-  "Given the filepath to an RDF-XML format ontology,
-   extract just the owl:Ontology element."
-  [filepath]
-  (with-open [r (clojure.java.io/reader filepath)]
-    (s/join
-     "\n"
-     (into
-      (vec
-       (take-while
-        #(not (s/includes? % "</owl:Ontology>"))
-        (line-seq r)))
-      ["    </owl:Ontology>"
-       "</rdf:RDF>"]))))
-
-(defn get-last-metadata
-  "Given a request URL and response headers (ETag, Last-Modified),
-   check if the catalog has data on the same version already.
-   If so, return that request's metadata, otherwise return nil."
-  [url response]
-  ;; Filter the most recent request for this URL
-  (if-let [e (->> @catalog
-                  (filter #(= (:request-url %) url))
-                  last)]
-    (if-not (nil? (:etag response))
-      ;; Compare the existing ETag to new ETag
-      (if (= (get-in e [:response :etag]) (:etag response))
-        ;; If the same, get details (metadata & location)
-        (assoc (:metadata e) :location (:location e)))
-      (if-not (nil? (:last-modified response))
-        ;; Compare modification dates
-        (if
-         (=
-          (get-in e [:response :last-modified])
-          (:last-modified response))
-          ;; If the same, get details (metadata & location)
-          (assoc (:metadata e) :location (:location e)))))))
-
-;; TODO: Unused. Might need this later.
-(defn unzip!
-  "Given the path to a zip file, unzip all contents."
-  [zip]
-  ;; Open a stream
-  (with-open [s (-> zip
-                    (io/as-file)
-                    (io/input-stream)
-                    (java.util.zip.ZipInputStream.))]
-    ;; Loop over stream
-    (loop [p (.getName (.getNextEntry s))]
-      ;; Folder should exist, but just in case...
-      (io/make-parents p)
-      (io/copy s (io/as-file p))
-      (if-let [n (.getNextEntry s)]
-        ;; Keep going if there's a next entry
-        (recur (.getName n))
-        ;; Otherwise delete the zip and return true
-        (do
-          (io/delete-file zip)
-          true)))))
 
 ;;----------------------------- FOLDERS ------------------------------
 
@@ -114,6 +53,88 @@
       (io/copy f zip)
       (.closeEntry zip)))
   (ctfu/recursive-delete (io/file dir)))
+
+(defn unzip!
+  "Given the path to a zip file, unzip all contents."
+  [zip]
+  ;; Open a stream
+  (with-open [s (-> zip
+                    (io/as-file)
+                    (io/input-stream)
+                    (java.util.zip.ZipInputStream.))]
+    ;; Loop over stream
+    (loop [p (.getName (.getNextEntry s))]
+      ;; Folder should exist, but just in case...
+      (io/make-parents p)
+      (io/copy s (io/as-file p))
+      (if-let [n (.getNextEntry s)]
+        ;; Keep going if there's a next entry
+        (recur (.getName n))
+        ;; Otherwise delete the zip and return true
+        (do
+          (io/delete-file zip)
+          true)))))
+
+;;----------------------------- READING ------------------------------
+
+(defn extract-element
+  "Given the filepath to an RDF-XML format ontology,
+   extract just the owl:Ontology element."
+  [filepath]
+  (with-open [r (clojure.java.io/reader filepath)]
+    (s/join
+     "\n"
+     (into
+      (vec
+       (take-while
+        #(not (s/includes? % "</owl:Ontology>"))
+        (line-seq r)))
+      ["    </owl:Ontology>"
+       "</rdf:RDF>"]))))
+
+(defn get-last-metadata
+  "Given a request URL and response headers (ETag, Last-Modified),
+   check if the catalog has data on the same version already.
+   If so, return that request's metadata, otherwise return nil."
+  [url response]
+  ;; Filter the most recent request for this URL
+  (if-let [e (->> @catalog
+                  (filter #(= (:request-url %) url))
+                  last)]
+    (if-not (nil? (:etag response))
+      ;; Compare the existing ETag to new ETag
+      (if (= (get-in e [:response :etag]) (:etag response))
+        ;; If the same, get details (metadata & location)
+        (assoc (:metadata e) :location (:location e)))
+      (if-not (nil? (:last-modified response))
+        ;; Compare modification dates
+        (if (= (get-in e [:response :last-modified]))
+          (:last-modified response)
+          ;; If the same, get details (metadata & location)
+          (assoc (:metadata e) :location (:location e)))))))
+
+(defn file-exists?
+  "Given a directory and a request URL, check if the download already
+   exists in that directory. If not, check if it has been zipped, 
+   unzip it, and check for the download. If not there, return false."
+  [filepath]
+  (if
+    (.exists
+      (io/as-file filepath))
+    true
+    ;; Check if the folder has been zipped
+    (let [dir (subs filepath 0 (s/last-index-of filepath "/"))
+          zip (str dir ".zip")]
+      (if (.exists (io/as-file zip))
+        (do
+          ;; Unzip it, make sure file is there
+          (unzip! zip)
+          (if (file-exists? filepath)
+            ;; And finally re-zip it
+            (zip! dir)
+        ;; Otherwise, the file doesn't exist
+            false))
+        false))))
 
 ;;----------------------------- OUTPUT -------------------------------
 
