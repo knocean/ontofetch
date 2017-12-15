@@ -32,7 +32,7 @@ For most commands, ontofetch expects a `config.edn` file in the working director
        :url "path-to-ontology-2"}
       ...]}
 
-the `extracts` entry before the `projects` vector specifies where any owl:Ontology elements retrieved through `$ ontofetch extract` should be stored.
+the `extracts` entry before the `projects` vector specifies where any owl:Ontology elements retrieved through the extract command should be stored.
 
 The `id` for each project will be used as the main project directory, we recommend setting this to the ontology's ID (i.e. Gene Ontology -> "go"). The `dir` is the subdirectory for each fetch, in [date and time pattern string](https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html) format (note that `-` is not currently allowed in file path names, but it is acceptable to create more nested directories by including `/`). Finally, the `url` is the path to the ontology online (most likely a PURL).
 
@@ -49,13 +49,13 @@ Retrieves an ontology from a URL and all imports. Each operation's details are s
 
     $ ontofetch fetch [options] <arguments>
 
-fetch requires options, unlike all other commands in with running without options runs them over all configured projects.
+fetch requires options, unlike all other commands in which running without options runs them over all configured projects.
 
   * `fetch --dir <arg> --url <arg>`: fetch the URL to the given directory
   * `fetch --project <arg> --dir <arg> --url <arg>`: fetch the URL to given project/directory
   * `fetch --project <arg>`: fetch configured project to dated directory in project folder
 
-If the ontology has imports, a `catalog-v001.xml` file will be generated for Protégé, pointing to the local path of each import. Each fetch operation (including those initiated by `update`) is logged in `catalog.edn`, placed in the working directory. An HTML report is also generated as `report.html`.
+If the ontology has imports, a `catalog-v001.xml` file will be generated for Protégé, pointing to the local path of each import. Each fetch operation (including those initiated by `update`) is logged in `catalog.edn`, which is placed in the working directory. An HTML report is also generated as `report.html`.
 
 ### extract
 
@@ -64,17 +64,17 @@ Pulls the owl:Ontology element from a directory or project and saves it in RDF/X
     $ ontofetch extract [options] <arguments>
 
   * `extract`: extract from all configured projects
-  * `extract --dir <arg>`: extract from ontology in directory to working directory (current directory, unless specified by `--working-dir`)
+  * `extract --dir <arg>`: extract from ontology in directory to working directory
   * `extract --dir <arg> --extracts <arg>`: extract from ontology in given directory to --extracts directory
   * `extract --project <arg>`: extract last fetch in project to configured extracts directory
 
 ### status
 
-Checks if a project (or projects) is up-to-date based on the HTTP headers of the resource.
+Checks if a project (or projects) is up-to-date based on the HTTP headers of the resource (ETag and Last-Modified).
 
     $ ontofetch status [options] <arguments>
 
-Status always requires a configuration file.
+status always requires a configuration file.
 
   * `status`: get status of all configured projects
   * `status --project <arg>`: get status of configured project
@@ -85,7 +85,7 @@ Runs status on a project (or projects), then fetches if necessary.
 
     $ ontofetch update [options] <arguments>
 
-Update always requires a configuration file.
+update always requires a configuration file.
 
   * `update`: update all configured projects
   * `update --project <arg>`: update configured project
@@ -93,7 +93,7 @@ Update always requires a configuration file.
 ### Flags
 
 * `-h, --help`: print usage information (ontofetch [command] --help)
-* `-w, --working-dir`: set top-level working directory, defaults to current directory
+* `-w, --working-dir <arg>`: set top-level working directory, defaults to current directory
 * `-z, --zip`: compress results of fetch (valid for `fetch` and `update`)
 
 ## Testing
