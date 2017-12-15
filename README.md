@@ -1,38 +1,100 @@
 # ontofetch
 
-ontofetch is a command line tool (Linux and OS X) for working with [Open Biomedical Ontologies](http://obofoundry.org/). It quickly downloads ontologies and their imports, extracts the metadata, and prepares a report of the operation.
+**ontofetch** is a command line tool (Linux and OS X) for working with [Open Biomedical Ontologies](http://obofoundry.org/). It can download ontologies and keep them updated, extract their metadata, and prepare reports.
 
-## Usage
+## Download
 
-ontofetch should be downloaded from this repo. If you just want the executables, you only need the `target` directory.
+First, make sure you have [Leiningen](https://leiningen.org) 2.x.
+
+ontofetch should be downloaded from this repo. In order to get the executables, build the project running `lein bin` in the ontofetch directory (see [lein-bin](https://github.com/Raynes/lein-bin) if you're curious). This will produce a `target` directory.
 
 The executable file lives at `target/ontofetch`. This is the exectuable for the jar version found in `target/uberjar`. Therefore, you can run ontofetch with either:
 
-    $ java -jar target/ontofetch-0.1.0-standalone.jar [opts]
+    $ java -jar target/uberjar/ontofetch-0.1.0-SNAPSHOT-standalone.jar [command] [options] <arguments>
 
 Or...
 
-	$ target/ontofetch [opts]
+	$ target/ontofetch [command] [options] <arguments>
 
-You can also rebuild just by running `lein bin` in the main directory (see [lein-bin](https://github.com/Raynes/lein-bin) if you're curious). This requires [Leiningen](https://leiningen.org) 2.x.
+(Or add the `target` directory to your `PATH` environment variable for easy access)
 
-## Options
+## Configuration
 
-ontofetch only accepts options at this time (no args):
+For most commands, ontofetch expects a `config.edn` file in the working directory. Any time you run a command without options or with the  `--project` flag, ontofetch looks for this file. or This file should contain details for each ontology project you wish to work on. It is structured as so:
 
-	$ ./ontofetch --dir obi --url http://purl.obolibrary.org/obo/obi.owl
-    
-(You can compress the created directory by adding a `--zip` flag)
+    {:extracts "dir-for-ontology-elements"
+     :projects
+     [{:id "ontology-id-1"
+       :dir "DateFormat"
+       :url "path-to-ontology-1"}
+      {:id "ontology-id-2"
+       :dir "DateFormat"
+       :url "path-to-ontology-2"}
+      ...]}
 
-This will create a directory 'obi'\* and download the ontology at the given URL to it. The following files are also generated:
-  * `obi-element.owl` - XML output of just the owl:Ontology element
-  * `catalog-v001.xml` - allows Protègè to load local import files\*\*
-  * `catalog.edn` - a running report of all ontofetch operations made in that directory
-  * `report.html` - a formatted report of the catalog (above)
+the `extracts` entry before the `projects` vector specifies where any owl:Ontology elements retrieved through `$ ontofetch extract` should be stored.
 
-\* The directory should not already exist, and can only include letters, numbers, or underscores.
+The `id` for each project will be used as the main project directory, we recommend setting this to the ontology's ID (i.e. Gene Ontology -> "go"). The `dir` is the subdirectory for each fetch, in [date and time pattern string](https://docs.oracle.com/javase/7/docs/api/java/text/SimpleDateFormat.html) format (note that `-` is not currently allowed in file path names, but it is acceptable to create more nested directories by including `/`). Finally, the `url` is the path to the ontology online (most likely a PURL).
 
-\*\* only created if there are direct imports in the downloaded ontology
+For example: 
+
+    {:id "bfo"
+     :dir "yyyy_MM_dd"
+     :url "http://purl.obolibrary.org/obo/bfo.owl"}
+
+## Usage
+
+### fetch
+Retrieves an ontology from a URL and all imports. Each operation's details are stored in catalog.edn. Supported formats include: RDF/XML, Turtle, OWL/XML, Manchester.
+
+    $ ontofetch fetch [options] <arguments>
+
+fetch requires options, unlike all other commands in with running without options runs them over all configured projects.
+
+  * `fetch --dir <arg> --url <arg>`: fetch the URL to the given directory
+  * `fetch --project <arg> --dir <arg> --url <arg>`: fetch the URL to given project/directory
+  * `fetch --project <arg>`: fetch configured project to dated directory in project folder
+
+If the ontology has imports, a `catalog-v001.xml` file will be generated for Protégé, pointing to the local path of each import. Each fetch operation (including those initiated by `update`) is logged in `catalog.edn`, placed in the working directory. An HTML report is also generated as `report.html`.
+
+### extract
+
+Pulls the owl:Ontology element from a directory or project and saves it in RDF/XML format as `[ont]-element.owl`.
+
+    $ ontofetch extract [options] <arguments>
+
+  * `extract`: extract from all configured projects
+  * `extract --dir <arg>`: extract from ontology in directory to working directory (current directory, unless specified by `--working-dir`)
+  * `extract --dir <arg> --extracts <arg>`: extract from ontology in given directory to --extracts directory
+  * `extract --project <arg>`: extract last fetch in project to configured extracts directory
+
+### status
+
+Checks if a project (or projects) is up-to-date based on the HTTP headers of the resource.
+
+    $ ontofetch status [options] <arguments>
+
+Status always requires a configuration file.
+
+  * `status`: get status of all configured projects
+  * `status --project <arg>`: get status of configured project
+
+### update
+
+Runs status on a project (or projects), then fetches if necessary.
+
+    $ ontofetch update [options] <arguments>
+
+Update always requires a configuration file.
+
+  * `update`: update all configured projects
+  * `update --project <arg>`: update configured project
+
+### Flags
+
+* `-h, --help`: print usage information (ontofetch [command] --help)
+* `-w, --working-dir`: set top-level working directory, defaults to current directory
+* `-z, --zip`: compress results of fetch (valid for `fetch` and `update`)
 
 ## Testing
 
@@ -40,7 +102,7 @@ ontofetch is built using [Leiningen](https://leiningen.org) and includes plugins
 
 ## Issues
 
-Please report any issues in our GitHub Issues.
+Please report any issues in our [GitHub Issues](https://github.com/knocean/ontofetch/issues).
 
 ## License
 
