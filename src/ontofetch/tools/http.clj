@@ -4,20 +4,6 @@
    [ontofetch.parse.xml :as xml]
    [org.httpkit.client :as http]))
 
-(defn invoke-timeout [url f timeout-ms]
-  (let [thr (Thread/currentThread)
-        fut (future (Thread/sleep timeout-ms)
-                    (.interrupt thr))]
-    (try (f)
-         (catch Exception e
-           (println "Request timeout: " url))
-         (finally
-           (future-cancel fut)))))
-
-(defmacro timeout
-  [url ms & body]
-  `(invoke-timeout ~url (fn [] ~@body) ~ms))
-
 (defn get-response
   "Manually follows redirects and returns a vector containing all
    redirect URLs. The final URL with content is the last entry."
@@ -52,7 +38,6 @@
         (doseq [line (line-seq r)]
           (.write w (str line "\n")))))))
 
-;; map doesn't work across this vector?
 (defn fetch-imports!
   "Given a directory and a list of imports,
    download each import file to the directory."

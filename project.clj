@@ -11,7 +11,8 @@
            [org.apache.jena/jena-arq "2.13.0"]
            [org.clojure/clojure "1.8.0"]
            [org.clojure/data.xml "0.0.8"]
-           [org.clojure/tools.cli "0.3.5"]]
+           [org.clojure/tools.cli "0.3.5"]
+           [org.clojure/tools.logging "0.4.0"]]
   :main ontofetch.core
   :target-path "target/%s"
   :bin {:name "ontofetch"

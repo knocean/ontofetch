@@ -218,8 +218,9 @@
 (defn map-metadata
   "Given an ontology IRI and the parsed ttl file (prefixes & triples),
    return a map of the full metadata to be parsed to XML."
-  [iri ttl]
-  (let [annotations (get-prefixed-annotations ttl iri)]
+  [ttl]
+  (let [iri (get-ontology-iri (second ttl))
+        annotations (get-prefixed-annotations ttl iri)]
     {:tag :owl:Ontology,
      :attrs {:rdf:about iri},
      :content (reduce map-annotation [] annotations)}))
