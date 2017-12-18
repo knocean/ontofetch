@@ -31,6 +31,31 @@
         (log/error 
           date-format " must be SimpleDateFormat pattern")))))
 
+(defn get-ns-prefix
+  "Given a namespace and a key to split at (# or /),
+   return a prefix for a namespace."
+  [uri]
+  (if (s/includes? uri "#")
+    (subs
+      uri
+      (+ 1 (s/last-index-of uri "/"))
+      (s/last-index-of uri "#"))
+    (second
+      (s/split
+        (second (s/split uri #"\.")) #"/"))))
+
+(defn get-namespace
+  "Given a URI and a key to split at (# or /),
+   return just the full namespace."
+  [uri]
+  (if (s/includes? uri "#")
+    (->> (s/last-index-of uri "#")
+         (+ 1)
+         (subs uri 0))
+    (->> (s/last-index-of uri "/")
+         (+ 1)
+         (subs uri 0))))
+
 (defn get-entity-id
   "Given a URI and a key to split at (# or /),
    return just the entity identifier."
@@ -42,18 +67,6 @@
     (->> (s/last-index-of uri "/")
          (+ 1)
          (subs uri))))
-
-(defn get-namespace
-  "Given a URI and a key to split at (# or /),
-   return just the namespace."
-  [uri]
-  (if (s/includes? uri "#")
-    (->> (s/last-index-of uri "#")
-         (+ 1)
-         (subs uri 0))
-    (->> (s/last-index-of uri "/")
-         (+ 1)
-         (subs uri 0))))
 
 (defn map-metadata
   "Given a vector containing [ontology-iri version-iri imports],

@@ -67,12 +67,11 @@
   "Given a property from an Annotation,
    return [uri prefix property]."
   [p]
-  (let [p-str (.toStringID p)]
+  (let [p-str (.toStringID p)] 
     ;; Check if it's a full URI or a CURIE
     (if (s/includes? p-str "http://")
       ;; Create a prefix from the full URI
-      (let [pref (u/get-entity-id
-                  (s/join "" (drop-last (u/get-namespace p-str))))]
+      (let [pref (u/get-ns-prefix (u/get-namespace p-str))]
         [p-str
          ;; rdf-schema is rdfs
          (if (= pref "rdf-schema")
