@@ -1,0 +1,5 @@
+{:extracts "output"
+ :projects
+ [{:id "output"
+   :dir "yyyy_MM_dd"
+   :url "http://purl.obolibrary.org/obo/bfo.owl"}]}

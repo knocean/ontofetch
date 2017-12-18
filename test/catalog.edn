@@ -1,0 +1,16 @@
+[{:request-url "http://purl.obolibrary.org/obo/bfo.owl",
+  :directory "output/2017_12_18",
+  :location "output/2017_12_18/bfo.owl",
+  :response
+  {:redirs
+   ["http://purl.obolibrary.org/obo/bfo.owl"
+    "https://raw.githubusercontent.com/BFO-ontology/BFO/v2.0/bfo.owl"],
+   :etag "\"f7c32a1f422ded7accabfc63f2b1a87ef4ad69ca\"",
+   :last-modified nil},
+  :start-time "2017-12-18T09:16:10.714-05:00",
+  :end-time "2017-12-18T09:16:11.036-05:00",
+  :duration 322,
+  :metadata
+  {:ontology-iri "http://purl.obolibrary.org/obo/bfo.owl",
+   :version-iri "http://purl.obolibrary.org/obo/bfo/2.0/bfo.owl",
+   :imports {}}}]

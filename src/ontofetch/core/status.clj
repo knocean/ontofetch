@@ -18,7 +18,7 @@
        last-loc (:location metadata)]
     ;; Is there metadata from the same version?
     (if-not (= nil metadata)
-      (f/check-for-file last-loc))))
+      (f/check-for-file (str wd last-loc)))))
 
 (defn project-status
   "Given a working directory (wd) and a project name, return the

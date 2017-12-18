@@ -1,4 +1,6 @@
+/stale
 /target
+/test/output
 /classes
 /checkouts
 pom.xml

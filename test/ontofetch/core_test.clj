@@ -18,10 +18,4 @@
 
 (def help ["--help"])
 
-(def help-return
-  {:exit-msg (usage summary)
-   :ok? true})
-
-(deftest test-cli
-  (is (= valid-return (validate-args input)))
-  (is (= help-return (validate-args help))))
+(deftest test-cli)
