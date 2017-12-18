@@ -1,21 +1,27 @@
 (ns ontofetch.core-test
   (:use [ontofetch.core])
   (:require
-   [clojure.test :refer :all]))
+   [clojure.test :refer :all]
+   [ontofetch.command :as cmd]))
 
-(def summary
-  (str
-   "  -d, --dir <arg>        Directory to save downloads.\n"
-   "  -u, --url <arg>        URL of the ontology to fetch.\n"
-   "  -p, --project <arg>    Parent directory for the project.\n"
-   "  -z, --zip              Compress the results.\n"
-   "  -h, --help"))
+(def extract
+  (:exit-msg (validate-args ["extract" "-h"])))
 
-(def input ["--dir" "d" "--url" "u" "--project" "p" "--zip"])
+(def fetch
+  (:exit-msg (validate-args ["fetch" "-h"])))
 
-(def valid-return
-  {:opts {:dir "d" :url "u" :project "p/" :zip true}})
+(def status
+  (:exit-msg (validate-args ["status" "-h"])))
 
-(def help ["--help"])
+(def update
+  (:exit-msg (validate-args ["update" "-h"])))
 
-(deftest test-cli)
+(def invalid
+  (:exit-msg (validate-args ["invalid" "-h"])))
+
+(deftest test-cli
+  (is (= cmd/extract-usage extract))
+  (is (= cmd/fetch-usage fetch))
+  (is (= cmd/status-usage status))
+  (is (= cmd/update-usage update))
+  (is (= cmd/usage invalid)))
