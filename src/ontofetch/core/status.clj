@@ -2,9 +2,44 @@
   (:require 
    [clojure.string :as s]
    [ontofetch.tools.files :as f]
-   [ontofetch.tools.http :as h]))
+   [ontofetch.tools.http :as h]
+   [ontofetch.tools.utils :as u]))
 
-;; TODO: get status of imports & indirect imports as well
+;; TODO: Test import-status and see if it returns true when imports
+;;       are for sure up to date, or nil otherwise...
+
+(defn import-status
+  "Given a map of imports, return the status of the imports. True if
+   all imports are up to date, nil if any imports are out of sync or 
+   unknown status."
+  [imports dir]
+  (reduce
+    (fn [v i]
+      ;; Get stored response and new response to compare
+      (let [prev (:response i)
+            cur (h/get-response (:url i))
+            loc (u/path-from-url dir (:url i))]
+        ;; First check that the file exists
+        (if-not (nil? (f/check-for-file loc))
+          (if-not (nil? (:etag cur))
+            ;; If etag is not nil, compare to previous etag
+            (if-not (= (:etag cur) (:etag prev))
+              ;; If they aren't equal, break with nil
+              (reduced nil)
+              ;; Otherwise return true
+              true)
+            ;; If it is nil, check for last-modified
+            (if-not (nil? (:last-modified cur))
+              ;; If not nil, compare to previous last-modified
+              (if-not (= (:last-modified cur) (:last-modified prev))
+                ;; If they aren't equal, break with nil
+                (reduced nil)
+                ;; Otherwise return true
+                true)
+              ;; Otherwise status is unknown, return nil
+              (reduced nil)))
+          (reduced nil))))
+    [] imports))
 
 (defn status
  "Given a working directory (wd) and a URL, return the status of that
@@ -14,11 +49,25 @@
   nil (update needed)." 
  [wd url]
  (let [response (h/get-response url)
-       metadata (f/get-current-metadata wd url response)
-       last-loc (:location metadata)]
-    ;; Is there metadata from the same version?
-    (if-not (= nil metadata)
-      (f/check-for-file (str wd last-loc)))))
+       metadata (f/get-current-metadata wd url response)]
+    (if-let [last-loc (:location metadata)]
+      ;; If last location is not nil, check that the file exists
+      ;; If it is nil, return nil
+      (if-let [prev-file (f/check-for-file (str wd last-loc))]
+        ;; If previous file is not nil, check that imports are current
+        ;; If it is nil, return nil
+        (let [imports (:imports metadata)
+              ;; Get dir name based on last location
+              dir (if (clojure.string/includes? last-loc "/") 
+                    (subs last-loc 0 (s/last-index-of last-loc "/"))
+                    ".")]
+          (if-not (empty? imports)
+            (if (import-status imports dir)
+              ;; If the import status is fine (true), return last-loc
+              last-loc)
+            ;; If the imports are empty (and you got here),
+            ;; everything is up to date
+            last-loc))))))
 
 (defn project-status
   "Given a working directory (wd) and a project name, return the
