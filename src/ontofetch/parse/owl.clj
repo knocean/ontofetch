@@ -6,7 +6,8 @@
   (:import
    (org.semanticweb.owlapi.apibinding OWLManager)
    (org.semanticweb.owlapi.model OWLOntologyManager OWLOntology IRI)
-   (org.semanticweb.owlapi.search EntitySearcher)))
+   (org.semanticweb.owlapi.search EntitySearcher)
+   (org.semanticweb.owlapi.util ZipIRIMapper)))
 
 (def base-prefixes
   {:xmlns:owl "http://www.w3.org/2002/07/owl#",
@@ -20,7 +21,20 @@
    return the ontology as an OWLOntology."
   [filepath]
   (let [manager (OWLManager/createOWLOntologyManager)]
-    (.loadOntologyFromOntologyDocument manager (io/file filepath))))
+    (.loadOntologyFromOntologyDocument
+      manager
+      (clojure.java.io/file filepath))))
+
+;; TODO: generate YAML for OWLZIP
+(defn load-zip
+  "Given a filepath to a zipped ontology,
+   return the ontology as an OWLOntology."
+  [filepath iri]
+  (.getKey 
+    (.get 
+      (.collect 
+        (.mappedEntries (ZipIRIMapper. (io/file filepath) iri)) 
+        (. java.util.stream.Collectors toList)) 0)))
 
 ;;---------------------------- METADATA ------------------------------
 ;; Methods to get specific metadata elements from an OWLOntology
