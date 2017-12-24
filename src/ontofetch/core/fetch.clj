@@ -9,23 +9,47 @@
   [ontofetch.tools.utils :as u]))
 
 (defn try-get-imports
-  "Given a list of imports and the directory they are saved in,
-   try to get their indirect imports (XML, jena, or OWLAPI)."
-  [imports dir]
+  "Given a filepath to an import, get a vector of indirect imports.
+   Try with XML, Jena, then OWLAPI. Otherwise, log exception."
+  [filepath]
   (try
-    (xml/get-more-imports imports dir)
+    (xml/get-imports (xml/get-metadata-node (xml/parse-xml filepath)))
     (catch Exception e
       (do
         (log/debug (.getMessage e))
         (try
-          (jena/get-more-imports imports dir)
+          (jena/get-imports (jena/read-triples filepath))
           (catch Exception e
             (do
               (log/debug (.getMessage e))
               (try
-                (owl/get-more-imports imports dir)
+                (owl/get-imports (owl/load-ontology filepath))
                 (catch Exception e
                   (log/error (.getMessage e)))))))))))
+
+(defn get-more-imports
+  "Given a list of imports and the directory they are saved in,
+   download the import and get its indirect imports. Return a vector
+   of maps with the import URL, HTTP response details, and indirect
+   imports."
+  [imports dir]
+  ;; First, fetch the imports
+  (let [i-maps (h/fetch-imports! dir imports)]
+    (reduce
+      (fn [v i]
+        (if-not (nil? (:response i))
+          ;; Get the indirect imports for the entry
+          (let [more (try-get-imports
+                      ;; Filepath for import
+                      (u/path-from-url dir 
+                        ;; URL is the first of redirects
+                        (first (:redirs (:response i)))))]
+            (if-not (empty? more)
+              ;; If the vector isn't empty, call fn on list of indirs
+              (conj v (assoc i :imports (get-more-imports more dir)))
+              ;; Otherwise just conj it into the vector
+              (conj v i)))))
+     [] i-maps)))
 
 (defn try-xml
   "Given a directory and a filepath to a fetched ontology, parse as
@@ -37,15 +61,9 @@
         rdf (xml/get-rdf-node xml)
         md (xml/get-metadata-node xml)
         imports (xml/get-imports md)]
-    ;; Download the direct imports
-    (h/fetch-imports! dir imports)
-    ;; Get a map of direct imports (key) & indirect imports (vals)
-    (let [i-map (try-get-imports imports dir)]
-      ;; Download the indirect imports
-      (for [indirs (vals i-map)]
-        ((partial h/fetch-imports! dir) indirs))
-      ;; Generate content
-      [(xml/get-ontology-iri md) (xml/get-version-iri md) i-map])))
+    [(xml/get-ontology-iri md)
+     (xml/get-version-iri md)
+     (get-more-imports imports dir)]))
 
 (defn try-jena
   "Given a directory and a filepath to a fetched ontology, parse with
@@ -53,39 +71,22 @@
   [dir filepath]
   ;; Get the triples and prefixes
   (let [ttl (jena/read-triples filepath)
-        trps (second ttl)]
-    ;; Get a list of the imports
-    (let [imports (jena/get-imports trps)]
-      ;; Download the direct imports
-      (h/fetch-imports! dir imports)
-      ;; Get a map of direct imports (key) & indirect imports (vals)
-      (let [i-map (try-get-imports imports dir)]
-        ;; Download the indirect imports
-        (for [indirs (vals i-map)]
-          ((partial h/fetch-imports! dir) indirs))
-        [(jena/get-ontology-iri trps)
-         (jena/get-version-iri trps)
-         i-map]))))
+        trps (second ttl)
+        imports (jena/get-imports trps)]
+    [(jena/get-ontology-iri trps)
+     (jena/get-version-iri trps)
+     (get-more-imports imports dir)]))
 
 (defn try-owl
   "Given a directory and a filepath to a fetched ontology, parse with
    OWLAPI, get the metadata, and fetch all imports to the same dir."
   [dir filepath]
   ;; Get the ontology as an OWLOntology
-  (let [owl-ont (owl/load-ontology filepath)]
-    ;; Get a list of the imports
-    (let [iri (owl/get-ontology-iri owl-ont)
-          version (owl/get-version-iri owl-ont)
-          imports (owl/get-imports owl-ont)
-          annotations (owl/get-annotations owl-ont)]
-      ;; Download the direct imports
-      (h/fetch-imports! dir imports)
-      ;; Get a map of direct imports (key) & indirect imports (vals)
-      (let [i-map (try-get-imports imports dir)]
-        ;; Download the indirect imports
-        (for [indirs (vals i-map)]
-          ((partial h/fetch-imports! dir) indirs))
-        [iri version i-map]))))
+  (let [owl-ont (owl/load-ontology filepath)
+        imports (owl/get-imports owl-ont)]
+    [(owl/get-ontology-iri owl-ont)
+     (owl/get-version-iri owl-ont)
+     (get-more-imports dir)]))
 
 (defn parse-ontology
   "Given a directory and a filepath to a fetched ontology, try to get

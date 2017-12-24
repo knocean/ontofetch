@@ -211,5 +211,5 @@
   (let [wd (str (first (s/split dir #"/")) "/")]
     (spit-catalog! wd request)
     (if-not (empty? (:imports request))
-      (spit-catalog-v001! dir (:imports request)))
-    (spit-report! wd)))
+      (spit-catalog-v001! dir (:imports request)))))
+    ;;(spit-report! wd)))

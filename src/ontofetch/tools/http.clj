@@ -1,5 +1,6 @@
 (ns ontofetch.tools.http
   (:require
+   [clojure.tools.logging :as log]
    [ontofetch.tools.utils :as u]
    [ontofetch.parse.xml :as xml]
    [org.httpkit.client :as http]))
@@ -38,21 +39,25 @@
         (doseq [line (line-seq r)]
           (.write w (str line "\n")))))))
 
+;; Returns a vector of import details
+;; [{:url import-url, :response {...}} 
+;;  {:url import-url, :response {...}}]
 (defn fetch-imports!
-  "Given a directory and a list of imports,
-   download each import file to the directory."
+  "Given a directory and a vector of imports, get the HTTP response,
+   download the import ontology, and return a vector of maps with
+   request details."
   [dir imports]
-  (loop [is imports
-         n 0]
-    (if (< n (count imports))
-      ;; Try to get the redirects
-      (if-let [url (last (:redirs (get-response (first is))))]
+  (reduce
+    (fn [v i]
+      ;; Get the response -> final URL
+      (if-let [response (get-response i)]
+        (let [url (last (:redirs response))]
+          ;; Fetch it if not nil
+          (fetch-ontology! (u/path-from-url dir i) url)
+          ;; Add the map to the vector of imports
+          (conj v (assoc {:url i} :response response)))
+        ;; If response is nil, still add it...
         (do
-          (fetch-ontology! (u/path-from-url dir (first is)) url)
-          (if-not (empty? (rest is))
-            (recur (rest is) (+ n 1))))
-        ;; If not redirs, import cannot be fetched
-        (do
-          (println (str "Cannot fetch " (first is)))
-          (if-not (empty? (rest is))
-            (recur (rest is) (+ n 1))))))))
+          (log/warn "Cannot fetch" i)
+          (conj v {:url i, :response nil}))))
+   [] imports))
