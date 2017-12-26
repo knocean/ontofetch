@@ -28,8 +28,8 @@
     (try
       (tf/unparse fmt (tl/local-now))
       (catch Exception e
-        (log/error 
-          date-format " must be SimpleDateFormat pattern")))))
+        (log/error
+         date-format " must be SimpleDateFormat pattern")))))
 
 (defn get-ns-prefix
   "Given a namespace and a key to split at (# or /),
@@ -37,12 +37,12 @@
   [uri]
   (if (s/includes? uri "#")
     (subs
-      uri
-      (+ 1 (s/last-index-of uri "/"))
-      (s/last-index-of uri "#"))
+     uri
+     (+ 1 (s/last-index-of uri "/"))
+     (s/last-index-of uri "#"))
     (second
-      (s/split
-        (second (s/split uri #"\.")) #"/"))))
+     (s/split
+      (second (s/split uri #"\.")) #"/"))))
 
 (defn get-namespace
   "Given a URI and a key to split at (# or /),
@@ -82,8 +82,8 @@
   (let [end (tl/local-now)]
     {:request-url (first (:redirs response)),
      :directory
-     (subs 
-      filepath 
+     (subs
+      filepath
       (+ (s/index-of filepath "/") 1)
       (s/last-index-of filepath "/")),
      :location

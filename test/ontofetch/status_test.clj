@@ -6,9 +6,9 @@
 
 (def wd "test/")
 
-(def expected 
+(def expected
   [{:id "output"
-    :location "test/output/2017_12_18/bfo.owl"}])
+    :location "output/2017_12_18/bfo.owl"}])
 (def output (dir-status wd))
 
 (deftest test-status

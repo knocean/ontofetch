@@ -93,11 +93,11 @@
     (^void finish [_])))
 
 (defn read-triples
-  "Given a source path, return the triples."
-  [source]
+  "Given a filepath, return the triples."
+  [filepath]
   (let [prefs (atom {})
         triples (atom [])]
-    (RDFDataMgr/parse (stream-triples prefs triples) source)
+    (RDFDataMgr/parse (stream-triples prefs triples) filepath)
     [@prefs @triples]))
 
 ;;---------------------------- METADATA ------------------------------

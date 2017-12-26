@@ -1,9 +1,9 @@
 (ns ontofetch.core
- (:require
-  [clojure.tools.cli :refer [parse-opts]])
- (:use
-  [ontofetch.command]) 
- (:gen-class))
+  (:require
+   [clojure.tools.cli :refer [parse-opts]])
+  (:use
+   [ontofetch.command])
+  (:gen-class))
 
 (def cli-options
   [["-d" "--dir <arg>" "Directory"
@@ -27,9 +27,9 @@
   (let [{:keys [options arguments summary errors]}
         (parse-opts args cli-options)]
     (cond
-      errors {:exit-msg errors :ok? false} 
+      errors {:exit-msg errors :ok? false}
       (:help options)
-      {:exit-msg (get-usage (first arguments)) :ok? true} 
+      {:exit-msg (get-usage (first arguments)) :ok? true}
       (= 1 (count arguments))
       {:action (first arguments) :opts options}
       :else {:exit-msg (usage summary :ok? false)})))
@@ -42,7 +42,7 @@
   ([status msg]
    (if msg
      (println msg))
-   (System/exit status)))   
+   (System/exit status)))
 
 (defn -main
   [& args]
@@ -53,5 +53,4 @@
        exit-msg)
       (do
         (run-ontofetch action opts)
-        (exit 0))))) 
- 
+        (exit 0)))))

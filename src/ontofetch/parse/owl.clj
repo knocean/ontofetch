@@ -22,19 +22,19 @@
   [filepath]
   (let [manager (OWLManager/createOWLOntologyManager)]
     (.loadOntologyFromOntologyDocument
-      manager
-      (clojure.java.io/file filepath))))
+     manager
+     (clojure.java.io/file filepath))))
 
 ;; TODO: generate YAML for OWLZIP
 (defn load-zip
   "Given a filepath to a zipped ontology,
    return the ontology as an OWLOntology."
   [filepath iri]
-  (.getKey 
-    (.get 
-      (.collect 
-        (.mappedEntries (ZipIRIMapper. (io/file filepath) iri)) 
-        (. java.util.stream.Collectors toList)) 0)))
+  (.getKey
+   (.get
+    (.collect
+     (.mappedEntries (ZipIRIMapper. (io/file filepath) iri))
+     (. java.util.stream.Collectors toList)) 0)))
 
 ;;---------------------------- METADATA ------------------------------
 ;; Methods to get specific metadata elements from an OWLOntology
@@ -81,7 +81,7 @@
   "Given a property from an Annotation,
    return [uri prefix property]."
   [p]
-  (let [p-str (.toStringID p)] 
+  (let [p-str (.toStringID p)]
     ;; Check if it's a full URI or a CURIE
     (if (s/includes? p-str "http://")
       ;; Create a prefix from the full URI

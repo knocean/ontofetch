@@ -48,16 +48,16 @@
    request details."
   [dir imports]
   (reduce
-    (fn [v i]
+   (fn [v i]
       ;; Get the response -> final URL
-      (if-let [response (get-response i)]
-        (let [url (last (:redirs response))]
+     (if-let [response (get-response i)]
+       (let [url (last (:redirs response))]
           ;; Fetch it if not nil
-          (fetch-ontology! (u/path-from-url dir i) url)
+         (fetch-ontology! (u/path-from-url dir i) url)
           ;; Add the map to the vector of imports
-          (conj v (assoc {:url i} :response response)))
+         (conj v (assoc {:url i} :response response)))
         ;; If response is nil, still add it...
-        (do
-          (log/warn "Cannot fetch" i)
-          (conj v {:url i, :response nil}))))
+       (do
+         (log/warn "Cannot fetch" i)
+         (conj v {:url i, :response nil}))))
    [] imports))

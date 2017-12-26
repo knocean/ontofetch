@@ -4,34 +4,34 @@
    [ontofetch.parse.jena :as jena]
    [ontofetch.parse.owl :as owl]
    [ontofetch.parse.xml :as xml]
-   [ontofetch.tools.files :as f])) 
+   [ontofetch.tools.files :as f]))
 
 (defn try-xml
   "Given a directory for extracts and a location of the ontology to
-   extract from, try extracting as XML." 
+   extract from, try extracting as XML."
   [extracts loc]
   ;; TODO: better way to determine xml?
   (xml/parse-xml loc)
   (f/spit-ont-element!
-    extracts
-    loc
-    (f/extract-element loc))) 
+   extracts
+   loc
+   (f/extract-element loc)))
 
 (defn try-jena
   "Given a directory for extracts and a location of the ontology to
-   extract from, try extracting with Jena."  
-  [extracts loc] 
+   extract from, try extracting with Jena."
+  [extracts loc]
   (let [ttl (jena/read-triples loc)]
     (f/spit-ont-element!
-       extracts
-       loc
-       (xml/node->xml-str
-        (jena/map-rdf-node ttl)
-        (jena/map-metadata ttl)))))
+     extracts
+     loc
+     (xml/node->xml-str
+      (jena/map-rdf-node ttl)
+      (jena/map-metadata ttl)))))
 
 (defn try-owl
   "Given a directory for extracts and a location of the ontology to
-   extract from, try extracting with OWLAPI."  
+   extract from, try extracting with OWLAPI."
   [extracts loc]
   (let [ont (owl/load-ontology loc)
         annotations (owl/get-annotations ont)
@@ -39,20 +39,20 @@
         version (owl/get-version-iri ont)
         imports (owl/get-imports ont)]
     (f/spit-ont-element!
-       extracts
-       loc
-       (xml/node->xml-str
-        (owl/map-rdf-node iri annotations)
-        (owl/map-metadata iri version imports annotations))))) 
+     extracts
+     loc
+     (xml/node->xml-str
+      (owl/map-rdf-node iri annotations)
+      (owl/map-metadata iri version imports annotations)))))
 
 (defn extract
   "Given a directory for extracts and a location of the ontology to
-   extract from, extract the owl:Ontology element."  
+   extract from, extract the owl:Ontology element."
   [extracts loc]
   (f/make-dir! extracts)
-  (log/debug "parsing" loc "as XML.") 
+  (log/debug "parsing" loc "as XML.")
   (try
-    (try-xml extracts loc)  
+    (try-xml extracts loc)
     (catch Exception e
       (do
         (log/debug e)
@@ -66,32 +66,32 @@
               (try
                 (try-owl extracts loc)
                 (catch Exception e
-                  (log/fatal e)))))))))) 
+                  (log/fatal e))))))))))
 
 (defn project-extract
   "Given a working directory (wd) and a project name, extract the
-   owl:Ontology element from the most recent fetch." 
+   owl:Ontology element from the most recent fetch."
   [wd project]
   (let [extracts (:extracts (f/slurp-config wd))
         loc (->> (f/slurp-catalog wd)
-                 (filter 
-                   #(= 
-                     (:request-url %) 
-                     (:url (f/get-project-config wd project))))
+                 (filter
+                  #(=
+                    (:request-url %)
+                    (:url (f/get-project-config wd project))))
                  first
                  :location)]
     (if-not (nil? loc)
       (extract (str wd extracts) loc)
       (do
         (log/fatal project "has not been fetched.")
-        false)))) 
+        false))))
 
 (defn dir-extract
   "Given a working directory (wd), get all projects from config and
-   extract the owl:Ontology elements from their most recent fetches." 
+   extract the owl:Ontology elements from their most recent fetches."
   [wd]
   (let [ids (reduce
-              (fn [v p] 
-                (conj v (:id p)))
-              [] (:projects (f/slurp-config wd)))]
+             (fn [v p]
+               (conj v (:id p)))
+             [] (:projects (f/slurp-config wd)))]
     (dorun (map #(project-extract wd %) ids))))

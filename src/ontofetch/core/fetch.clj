@@ -1,12 +1,12 @@
 (ns ontofetch.core.fetch
- (:require
-  [clojure.tools.logging :as log]
-  [ontofetch.parse.jena :as jena]
-  [ontofetch.parse.owl :as owl]
-  [ontofetch.parse.xml :as xml]
-  [ontofetch.tools.files :as f]
-  [ontofetch.tools.http :as h]
-  [ontofetch.tools.utils :as u]))
+  (:require
+   [clojure.tools.logging :as log]
+   [ontofetch.parse.jena :as jena]
+   [ontofetch.parse.owl :as owl]
+   [ontofetch.parse.xml :as xml]
+   [ontofetch.tools.files :as f]
+   [ontofetch.tools.http :as h]
+   [ontofetch.tools.utils :as u]))
 
 (defn try-get-imports
   "Given a filepath to an import, get a vector of indirect imports.
@@ -36,19 +36,19 @@
   ;; First, fetch the imports
   (let [i-maps (h/fetch-imports! dir imports)]
     (reduce
-      (fn [v i]
-        (if-not (nil? (:response i))
+     (fn [v i]
+       (if-not (nil? (:response i))
           ;; Get the indirect imports for the entry
-          (let [more (try-get-imports
+         (let [more (try-get-imports
                       ;; Filepath for import
-                      (u/path-from-url dir 
+                     (u/path-from-url dir
                         ;; URL is the first of redirects
-                        (first (:redirs (:response i)))))]
-            (if-not (empty? more)
+                                      (first (:redirs (:response i)))))]
+           (if-not (empty? more)
               ;; If the vector isn't empty, call fn on list of indirs
-              (conj v (assoc i :imports (get-more-imports more dir)))
+             (conj v (assoc i :imports (get-more-imports more dir)))
               ;; Otherwise just conj it into the vector
-              (conj v i)))))
+             (conj v i)))))
      [] i-maps)))
 
 (defn try-xml
@@ -86,7 +86,7 @@
         imports (owl/get-imports owl-ont)]
     [(owl/get-ontology-iri owl-ont)
      (owl/get-version-iri owl-ont)
-     (get-more-imports dir)]))
+     (get-more-imports imports dir)]))
 
 (defn parse-ontology
   "Given a directory and a filepath to a fetched ontology, try to get
@@ -129,21 +129,21 @@
      (f/spit-content!
       wd-dir
       (u/map-request
-        filepath
-        response
-        (parse-ontology wd-dir filepath)
-        start)) 
+       filepath
+       response
+       (parse-ontology wd-dir filepath)
+       start))
      (if zip
        (f/zip! wd-dir)
        true)))
   ;; (fetch wd project dir url)
-  ([wd project dir url zip]  
+  ([wd project dir url zip]
    (fetch wd (str project "/" dir) url zip))
   ;; (fetch wd project)
   ([wd project zip]
    (let [config (f/get-project-config wd project)]
-    (fetch
-      wd 
+     (fetch
+      wd
       (str project "/" (u/format-dir-date (:dir config)))
       (:url config)
       zip))))

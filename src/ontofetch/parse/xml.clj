@@ -108,14 +108,14 @@
    return the Ontology element as XML string."
   [rdf-node metadata]
   (str
-    "<?xml version=\"1.0\"?>\n"
-    (s/replace
-     (->> {:content
-           (vector (update-map-vals metadata))}
-          (into rdf-node)
-          x/emit-element
-          with-out-str)
-     "'" "\"")))
+   "<?xml version=\"1.0\"?>\n"
+   (s/replace
+    (->> {:content
+          (vector (update-map-vals metadata))}
+         (into rdf-node)
+         x/emit-element
+         with-out-str)
+    "'" "\"")))
 
 (defn catalog-v001
   "Generates catalog-v001 from set of imports."
