@@ -119,9 +119,9 @@
       (->> config
            slurp
            clojure.edn/read-string)
-      (throw 
-        (java.io.IOException. 
-          (str wd "config.edn does not exist."))))))
+      (throw
+       (java.io.IOException.
+        (str wd "config.edn does not exist."))))))
 
 (defn get-project-config
   "Given a working directory path and a project name, get the
@@ -168,25 +168,25 @@
    the extracted element (as XML), spit the file as [ont]-element."
   [extracts loc element]
   (spit
-    (str
-      extracts
-      "/"
+   (str
+    extracts
+    "/"
       ;; Create the element filename from the extract location
-      (-> loc
-          (subs 
-           (+ (s/last-index-of loc "/") 1) 
-           (s/last-index-of loc "."))
-          (str "-element.owl")))
-    element)
+    (-> loc
+        (subs
+         (+ (s/last-index-of loc "/") 1)
+         (s/last-index-of loc "."))
+        (str "-element.owl")))
+   element)
   true)
 
 (defn spit-report!
   "Given a working-dir, generate the HTML report
    based on the catalog of fetch requests."
   [wd]
-  (spit 
-    (str wd +report+)
-    (h/gen-html (slurp-catalog wd))))
+  (spit
+   (str wd +report+)
+   (h/gen-html (slurp-catalog wd))))
 
 (defn spit-catalog-v001!
   "Given a directory and a map of imports,
@@ -211,5 +211,5 @@
   (let [wd (str (first (s/split dir #"/")) "/")]
     (spit-catalog! wd request)
     (if-not (empty? (:imports request))
-      (spit-catalog-v001! dir (:imports request)))))
-    ;;(spit-report! wd)))
+      (spit-catalog-v001! dir (:imports request)))
+    (spit-report! wd)))

@@ -13,13 +13,14 @@
 (defn list-imports
   "Generates a list element for each import,
    as long as imports exists."
-  [imports]
-  (if-not (empty? imports)
-    [:div [:b "Imports: "]
-     (into [:ul]
-           (for [[url indirects] imports]
-             (into [:li url] (list-indirects indirects))))]
-    [:div [:b "Imports: "] "none" [:br] [:br]]))
+  [dir-imports]
+  (if (not-empty dir-imports)
+    (into [:ul]
+          (for [d dir-imports]
+            (if-let [indirs (:imports d)]
+              [:li (:url d) (list-imports (:imports d))]
+              [:li (:url d)])))
+    "none"))
 
 (defn gen-entry
   "Generates HTML for each entry in the catalog"
@@ -45,7 +46,9 @@
                           :target "_blank"}
                       (:location catalog-entry)]
    [:br]
-   (list-imports (get-in catalog-entry [:metadata :imports]))])
+   [:b "Imports: "]
+   (list-imports (get-in catalog-entry [:metadata :imports]))
+   [:br] [:br]])
 
 (defn gen-html
   "Generates a full HTML report of all requests."
