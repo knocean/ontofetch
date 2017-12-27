@@ -8,9 +8,10 @@
 (def cli-options
   [["-d" "--dir <arg>" "Directory"
     :parse-fn #(String. %)]
-   ["-e" "--extracts <arg>" "Extract directory"
+   ["-e" "--extract-dir <arg>" "Extract directory"
     :parse-fn #(str (String. %) "/")
     :default "./"]
+   ["-E" "--extracts" "Get extracts"]
    ["-u" "--url <arg>" "URL"
     :parse-fn #(String. %)]
    ["-p" "--project <arg>" "Project name"

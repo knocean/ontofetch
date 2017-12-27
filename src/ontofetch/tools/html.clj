@@ -2,7 +2,8 @@
   (:require
    [hiccup.core :as hic]))
 
-(def +bootstrap+ "resources/static/css/bootstrap.min.css")
+(def +bootstrap+
+  "https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css")
 
 (defn list-indirects
   "Helper fn to list indirect imports under the direct import."
@@ -51,8 +52,9 @@
    [:br] [:br]])
 
 (defn gen-html
-  "Generates a full HTML report of all requests."
-  [catalog]
+  "Given an ID and a set of catalog entries,
+   generate an HTML report with all entries."
+  [id catalog]
   (hic/html
    [:html {:lang "en"}
     [:head
@@ -60,12 +62,12 @@
      [:meta {:name "viewport"
              :content
              "width=device-width, initial-scale=1, shrink-to-fit=no"}]
-     [:title "Ontofetch Report"]
+     [:title (str id " Report")]
      [:link {:rel "stylesheet" :href +bootstrap+}]]
     [:body
      [:div {:class "container"}
       [:div
-       [:h1 "ontofetch Requests"]
+       [:h1 (str id " Requests")]
        [:p {:class "lead"}
         "See the full metadata in "
         [:a {:href "catalog.edn" :target "_blank"} "catalog.edn"]]]

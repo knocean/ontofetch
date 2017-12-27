@@ -13,7 +13,8 @@
            [org.clojure/clojure "1.8.0"]
            [org.clojure/data.xml "0.0.8"]
            [org.clojure/tools.cli "0.3.5"]
-           [org.clojure/tools.logging "0.4.0"]]
+           [org.clojure/tools.logging "0.4.0"]
+           [overtone/at-at "1.2.0"]]
   :main ontofetch.core
   :target-path "target/%s"
   :bin {:name "ontofetch"

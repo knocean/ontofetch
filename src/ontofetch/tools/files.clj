@@ -180,13 +180,21 @@
    element)
   true)
 
-(defn spit-report!
-  "Given a working-dir, generate the HTML report
-   based on the catalog of fetch requests."
-  [wd]
+(defn spit-fetch-report!
+  "Given a report directory and a subset of catalog entries,
+   generate a fetch report containing all entries."
+  [dir subset]
   (spit
-   (str wd +report+)
-   (h/gen-html (slurp-catalog wd))))
+   (str dir "/fetches.html")
+   (h/gen-html "ontofetch" subset)))
+
+(defn spit-project-report!
+  "Given a report directory, a project ID, and a subset of catalog
+   entries for that project, generate an HTML report."
+  [dir id subset]
+  (spit
+    (str dir "/" id ".html")
+    (h/gen-html id subset)))
 
 (defn spit-catalog-v001!
   "Given a directory and a map of imports,
@@ -206,10 +214,9 @@
 (defn spit-content!
   "Given a directory (working-dir/(opt project)/dir) and a map of the
    completed fetch request, update the catalog, generate the dir's
-   catalog-v001 (if there are imports), and update the HTML report."
+   catalog-v001 (if there are imports)."
   [dir request]
   (let [wd (str (first (s/split dir #"/")) "/")]
     (spit-catalog! wd request)
     (if-not (empty? (:imports request))
-      (spit-catalog-v001! dir (:imports request)))
-    (spit-report! wd)))
+      (spit-catalog-v001! dir (:imports request)))))

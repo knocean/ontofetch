@@ -3,7 +3,8 @@
    [clojure.tools.logging :as log]
    [ontofetch.core.extract :as e]
    [ontofetch.core.fetch :as f]
-   [ontofetch.core.status :as s]
+   [ontofetch.core.serve :as sr]
+   [ontofetch.core.status :as st]
    [ontofetch.core.update :as u]))
 
 ;; TODO: service
@@ -123,11 +124,11 @@
 (defn run-extract
   "Given CLI options, run the extract command."
   [opts]
-  (let [{:keys [working-dir dir project extracts]} opts]
+  (let [{:keys [working-dir dir project extract-dir]} opts]
     (cond
       ;; --dir 
       (and dir (not project))
-      (e/extract extracts
+      (e/extract extract-dir
                  (ontofetch.tools.utils/find-ontology
                   working-dir
                   (ontofetch.tools.files/slurp-catalog working-dir)
@@ -157,17 +158,22 @@
         (log/fatal "Invalid options for fetch.")
         (println fetch-usage)))))
 
-;; If they're missing don't need to check
+(defn run-serve
+  "Given CLI options, run the serve command."
+  [opts]
+  (let [{:keys [working-dir zip extracts]} opts]
+    (sr/serve working-dir zip extracts)))
+
 (defn run-status
   "Given CLI options, run the status command."
   [opts]
   (let [{:keys [working-dir project]} opts]
     (if-not (nil? project)
       ;; --project 
-      (if-let [s (s/project-status working-dir project)]
+      (if-let [s (st/project-status working-dir project)]
         (log/info project "is up-to-date at" s)
         (log/info project "is out of sync"))
-      (let [ss (s/dir-status working-dir)]
+      (let [ss (st/dir-status working-dir)]
         (log/info "OUT OF SYNC\n\t"
                   (clojure.string/join "\n\t "
                                        (reduce

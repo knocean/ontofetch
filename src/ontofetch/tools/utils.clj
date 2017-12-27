@@ -6,6 +6,8 @@
    [clj-time.format :as tf]
    [clj-time.local :as tl]))
 
+(def fmt (tf/formatter :date-time))
+
 (defn conj*
   "Given a seq and an element to append, return a conj'd vector with
    the new element at the end."
@@ -89,8 +91,8 @@
      :location
      (subs filepath (+ (s/index-of filepath "/") 1)),
      :response response,
-     :start-time (.toString start),
-     :end-time (.toString end),
+     :start-time (tf/unparse fmt start),
+     :end-time (tf/unparse fmt end),
      :duration (t/in-millis (t/interval start end)),
      :metadata (map-metadata metadata)}))
 
