@@ -74,6 +74,26 @@
         ""]
        (clojure.string/join \newline)))
 
+(def serve-usage
+  (->> [""
+        (str
+         "serve continuously updates all projects in a directory on a"
+         " schedule.")
+        ""
+        "usage:"
+        "  ontofetch serve [options] <arguments>"
+        "  * serve"
+        "      Run serve in current directory until killed"
+        "  * serve --kill"
+        "      Kill a running serve process"
+        ""
+        "options:"
+        "  -e, --extracts            Include extract command"
+        "  -w, --working-dir <arg>   Working directory (default './')"
+        "  -z, --zip                 Compress fetch contents"
+        ""]
+       (clojure.string/join \newline)))
+
 (def status-usage
   (->> [""
         (str
@@ -117,6 +137,7 @@
   (cond
     (= action "extract") extract-usage
     (= action "fetch") fetch-usage
+    (= action "serve") serve-usage
     (= action "status") status-usage
     (= action "update") update-usage
     :else usage))
@@ -158,11 +179,14 @@
         (log/fatal "Invalid options for fetch.")
         (println fetch-usage)))))
 
+;; TODO: Not fetching for some reason
 (defn run-serve
   "Given CLI options, run the serve command."
   [opts]
-  (let [{:keys [working-dir zip extracts]} opts]
-    (sr/serve working-dir zip extracts)))
+  (let [{:keys [working-dir zip extracts kill]} opts]
+    (if kill
+      (sr/kill)
+      (sr/serve working-dir zip extracts))))
 
 (defn run-status
   "Given CLI options, run the status command."
@@ -197,6 +221,7 @@
   (cond
     (= action "extract") (run-extract opts)
     (= action "fetch") (run-fetch opts)
+    (= action "serve") (run-serve opts)
     (= action "status") (run-status opts)
     (= action "update") (run-update opts)
     :else

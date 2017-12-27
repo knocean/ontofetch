@@ -193,8 +193,8 @@
    entries for that project, generate an HTML report."
   [dir id subset]
   (spit
-    (str dir "/" id ".html")
-    (h/gen-html id subset)))
+   (str dir "/" id ".html")
+   (h/gen-html id subset)))
 
 (defn spit-catalog-v001!
   "Given a directory and a map of imports,
