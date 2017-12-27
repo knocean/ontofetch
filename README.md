@@ -23,6 +23,7 @@ Or...
 For most commands, ontofetch expects a `config.edn` file in the working directory. Any time you run a command without options or with the  `--project` flag, ontofetch looks for this file. or This file should contain details for each ontology project you wish to work on. It is structured as so:
 
     {:extracts "dir-for-ontology-elements"
+     :serve-interval ms
      :projects
      [{:id "ontology-id-1"
        :dir "DateFormat"
@@ -65,8 +66,24 @@ Pulls the owl:Ontology element from a directory or project and saves it in RDF/X
 
   * `extract`: extract from all configured projects
   * `extract --dir <arg>`: extract from ontology in directory to working directory
-  * `extract --dir <arg> --extracts <arg>`: extract from ontology in given directory to --extracts directory
+  * `extract --dir <arg> --extract-dir <arg>`: extract from ontology in given directory to --extracts directory
   * `extract --project <arg>`: extract last fetch in project to configured extracts directory
+  
+### serve
+
+Continuously updates all projects in a directory on a schedule.
+
+    $ ontofetch serve [options] <arguments>
+
+serve always requires a configuration file.
+
+  * `serve`: continuously run serve in current directory until killed
+  * `serve --extracts`: include extraction of owl:Ontology element in serve
+  * `serve --kill`: kills a running serve process
+  
+The schedule is set with the `:serve-interval` property in `config.edn`. This should be provided as an integer in milliseconds. If no `:serve-interval` is provided, the process will default to updating every 4 hours.
+
+This will continue running until killed. Each time `serve` is run, a new, dated directory is created in the `reports` directory. This contains `fetches.html` with all fetch reports, and an HTML page for each project.
 
 ### status
 
