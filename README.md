@@ -79,11 +79,10 @@ serve always requires a configuration file.
 
   * `serve`: continuously run serve in current directory until killed
   * `serve --extracts`: include extraction of owl:Ontology element in serve
-  * `serve --kill`: kills a running serve process
   
 The schedule is set with the `:serve-interval` property in `config.edn`. This should be provided as an integer in milliseconds. If no `:serve-interval` is provided, the process will default to updating every 4 hours.
 
-This will continue running until killed. Each time `serve` is run, a new, dated directory is created in the `reports` directory. This contains `fetches.html` with all fetch reports, and an HTML page for each project.
+This will continue running until killed (<kbd>Ctrl+C</kbd>). Each time `serve` is run, a new, dated directory is created in the `reports` directory. This contains `fetches.html` with all fetch reports, and an HTML page for each project.
 
 ### status
 

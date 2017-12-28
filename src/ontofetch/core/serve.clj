@@ -15,9 +15,9 @@
 (def pool (at/mk-pool))
 
 (defn reports-dir!
-  "Given a working directory (wd) and the slurped config file,
+  "Given a working directory (wd),
    create directories for the HTML reports."
-  [wd config]
+  [wd]
   ;; Make sure the main dir is there
   (f/make-dir! (str wd "reports"))
   ;; Create a dated subdir
@@ -57,7 +57,6 @@
   "Given a working directory (wd) and option to zip results,
    run update on a regular time interval as specified in config.edn."
   [wd zip extracts]
-  (println "SERVE STARTED")
   (let [config (f/slurp-config wd)
         ;; If interval not specified, default to 4 hours  
         ms (or (:serve-interval (f/slurp-config wd)) 14400000)
@@ -65,15 +64,8 @@
         opts {:zip zip,
               :extracts extracts,
               :date (tl/local-now),
-              :reports (reports-dir! wd config)}]
-      ;; Run every given ms
-      ;; TODO: ability to kill process
-    (at/interspaced ms #(serve-helper wd config opts) pool)))
-
-;; TODO: Change so multiple serves can run at the same time?
-;; TODO: Check if a process is running before killing it
-(defn kill
-  "Kill the running process in pool"
-  []
-  (println "SERVE KILLED")
-  (at/stop-and-reset-pool! pool :strategy :kill))
+              :reports (reports-dir! wd)}]
+    ;; Run every given ms
+    (.start
+     (Thread.
+      (at/interspaced ms #(serve-helper wd config opts) pool)))))

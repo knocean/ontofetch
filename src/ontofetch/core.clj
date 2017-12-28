@@ -12,7 +12,6 @@
     :parse-fn #(str (String. %) "/")
     :default "./"]
    ["-E" "--extracts" "Get extracts"]
-   ["-k" "--kill" "Kill serve"]
    ["-u" "--url <arg>" "URL"
     :parse-fn #(String. %)]
    ["-p" "--project <arg>" "Project name"

@@ -84,8 +84,6 @@
         "  ontofetch serve [options] <arguments>"
         "  * serve"
         "      Run serve in current directory until killed"
-        "  * serve --kill"
-        "      Kill a running serve process"
         ""
         "options:"
         "  -e, --extracts            Include extract command"
@@ -183,10 +181,8 @@
 (defn run-serve
   "Given CLI options, run the serve command."
   [opts]
-  (let [{:keys [working-dir zip extracts kill]} opts]
-    (if kill
-      (sr/kill)
-      (sr/serve working-dir zip extracts))))
+  (let [{:keys [working-dir zip extracts]} opts]
+    (sr/serve working-dir zip extracts)))
 
 (defn run-status
   "Given CLI options, run the status command."
