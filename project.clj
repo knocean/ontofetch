@@ -10,6 +10,7 @@
            [net.sourceforge.owlapi/owlapi-distribution "5.1.0"]
            [owlapi-tools "6.0.0"]
            [org.apache.jena/jena-arq "2.13.0"]
+           [org.clojure/core.async "0.3.465"]
            [org.clojure/clojure "1.8.0"]
            [org.clojure/data.xml "0.0.8"]
            [org.clojure/tools.cli "0.3.5"]

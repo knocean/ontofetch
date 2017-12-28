@@ -3,6 +3,8 @@
    [clj-time.core :as t]
    [clj-time.format :as tf]
    [clj-time.local :as tl]
+   [clojure.core.async :as async
+    :refer [<! >! <!! timeout chan alt! go close!]]
    [clojure.string :as s]
    [clojure.tools.logging :as log]
    [ontofetch.core.extract :as e]
@@ -11,6 +13,7 @@
    [ontofetch.tools.utils :as u]
    [overtone.at-at :as at]))
 
+(def ch (atom nil))
 (def fmt (tf/formatter :date-time))
 (def pool (at/mk-pool))
 
@@ -53,6 +56,22 @@
                          subset)]
         (f/spit-project-report! (:reports opts) id proj-subset)))))
 
+(defn run
+  "Given an interval in milliseconds, a working directory (wd), the
+   slurped config file, and a map of serve options, run serve."
+  [ms wd config opts]
+  (go (at/interspaced ms #(serve-helper wd config opts) pool)))
+
+(defn kill!
+  "Given a start time (DateTime), provide feedback on the operation
+   and kill the running process."
+  [start]
+  (let [end (tl/local-now)]
+    (log/info "serve killed at" (tf/unparse fmt end))
+    (log/info
+     "ran for" (t/in-minutes (t/interval start end)) "minutes")
+    (close! @ch)))
+
 (defn serve
   "Given a working directory (wd) and option to zip results,
    run update on a regular time interval as specified in config.edn."
@@ -64,8 +83,12 @@
         opts {:zip zip,
               :extracts extracts,
               :date (tl/local-now),
-              :reports (reports-dir! wd)}]
+              :reports (reports-dir! wd)}
+        start (tl/local-now)]
     ;; Run every given ms
-    (.start
-     (Thread.
-      (at/interspaced ms #(serve-helper wd config opts) pool)))))
+    (log/info "serve started at" (tf/unparse fmt start))
+    (reset! ch (run ms wd config opts))
+    (.addShutdownHook
+     (Runtime/getRuntime)
+     (Thread. #(kill! start)))
+    (while true <!! @ch)))
