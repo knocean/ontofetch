@@ -4,10 +4,11 @@
   :license {:name "BSD 3-Clause License"
             :url "https://opensource.org/licenses/BSD-3-Clause"}
   :dependencies [[clj-time "0.14.2"]
+           [clj-yaml "0.4.0"]
            [clojure-tools "1.1.3"]
            [hiccup "1.0.5"]
            [http-kit "2.1.18"]
-           [net.sourceforge.owlapi/owlapi-distribution "5.1.0"]
+           [net.sourceforge.owlapi/owlapi-distribution "5.1.2"]
            [owlapi-tools "6.0.0"]
            [org.apache.jena/jena-arq "2.13.0"]
            [org.clojure/core.async "0.3.465"]
